@@ -1,0 +1,24 @@
+# general
+run_name: 'test' # the name of the experiment
+seed: 0 # run seed
+
+# channel
+channel_type: 'MIMO' # Channel type values: ['SISO','MIMO'].
+channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
+detector_type: 'model' # 'model' or 'black_box'
+linear: True # channel linearity. Boolean value.
+fading_in_channel: False # If the channel is fading/non-fading. values: [True, False]
+snr: 12 # validation SNR value. values: float.
+
+# protocol
+block_length: 2250 # coherence block time, total size of pilot + data. values: int.
+pilot_size: 250 # pilot bits
+blocks_num: 25 # number of validation frames. values: int.
+
+# online training hyperparameters
+is_online_training: True # Whether to run the online training (as in ViterbiNet). values: [True, False].
+loss_type: 'CrossEntropy' # Loss type. values: 'BCE','CrossEntropy','MSE'.
+optimizer_type: 'Adam' # Optimizer type. values: 'Adam','RMSprop','SGD'.
+
+# concept drift mechanism
+mechanism: 'always' # ['always','random',...]
