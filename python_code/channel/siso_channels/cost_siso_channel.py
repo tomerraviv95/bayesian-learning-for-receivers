@@ -11,7 +11,7 @@ conf = Config()
 
 COST_LENGTH = 200
 COST_STEP = 2
-
+H_COEF = 0.8
 
 class Cost2100SISOChannel:
     @staticmethod
@@ -21,7 +21,7 @@ class Cost2100SISOChannel:
             h_channel_response = scipy.io.loadmat(os.path.join(SISO_COST2100_DIR, f'h_{i}'))
             total_h[:, i] = h_channel_response['h_channel_response_mag'].reshape(-1)[:COST_LENGTH][::COST_STEP]
         h = np.reshape(total_h[index], [1, memory_length])
-        h *= 0.8
+        h *= H_COEF
         return h
 
     @staticmethod

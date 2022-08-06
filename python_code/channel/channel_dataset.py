@@ -9,7 +9,7 @@ from python_code import DEVICE
 from python_code.channel.mimo_channels.mimo_channel_dataset import MIMOChannel
 from python_code.channel.siso_channels.siso_channel_dataset import SISOChannel
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import ChannelModes, ModulationType
+from python_code.utils.constants import ChannelModes
 from python_code.utils.python_utils import normalize_for_modulation
 
 conf = Config()
@@ -38,8 +38,7 @@ class ChannelModelDataset(Dataset):
             database = []
         tx_full = np.empty((self.blocks_num, normalize_for_modulation(self.block_length), self.channel_type.tx_length))
         h_full = np.empty((self.blocks_num, *self.channel_type.h_shape))
-        rx_full = np.empty((self.blocks_num, normalize_for_modulation(self.block_length), self.channel_type.rx_length),
-                           dtype=complex if conf.modulation_type == ModulationType.QPSK.name else float)
+        rx_full = np.empty((self.blocks_num, normalize_for_modulation(self.block_length), self.channel_type.rx_length))
         # accumulate words until reaches desired number
         for index in range(self.blocks_num):
             tx, h, rx = self.channel_type.get_vectors(snr, index)

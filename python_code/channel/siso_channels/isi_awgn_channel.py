@@ -6,6 +6,8 @@ from python_code.utils.config_singleton import Config
 conf = Config()
 
 GAMMA = 0.5  # gamma value for time decay SISO fading
+H_COEF = 0.8
+C = 0.5
 
 
 class ISIAWGNChannel:
@@ -15,13 +17,13 @@ class ISIAWGNChannel:
         if fading:
             h = ISIAWGNChannel._add_fading(h, memory_length, index)
         else:
-            h *= 0.8
+            h *= H_COEF
         return h
 
     @staticmethod
     def _add_fading(h: np.ndarray, memory_length: int, index: int) -> np.ndarray:
         fading_taps = np.array([51, 39, 33, 21])
-        h *= (0.8 + 0.2 * np.cos(2 * np.pi * index / fading_taps)).reshape(1, memory_length)
+        h *= (H_COEF + (1 - H_COEF) * np.cos(2 * np.pi * index / fading_taps)).reshape(1, memory_length)
         return h
 
     @staticmethod
@@ -39,7 +41,7 @@ class ISIAWGNChannel:
         w = ISIAWGNChannel._sample_noise_vector(row, col, snr)
         y = conv + w
         if not conf.linear:
-            y = np.tanh(0.5 * y)
+            y = np.tanh(C * y)
         return y
 
     @staticmethod
