@@ -10,7 +10,7 @@ from python_code.utils.trellis_utils import calculate_siso_states
 
 conf = Config()
 EPOCHS = 500
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 
 
 class RNNTrainer(Trainer):
@@ -58,18 +58,15 @@ class RNNTrainer(Trainer):
         :param tx: transmitted word
         :param rx: received word
         """
-        if conf.from_scratch:
+        if not conf.fading_in_channel:
             self._initialize_detector()
         self.deep_learning_setup()
 
         # run training loops
         loss = 0
         for i in range(EPOCHS):
-            word_ind = randint(a=0, b=conf.online_repeats_n)
-            subword_ind = randint(a=0, b=conf.pilot_size - BATCH_SIZE)
-            ind = word_ind * conf.pilot_size + subword_ind
+            ind = randint(a=0, b=conf.pilot_size - BATCH_SIZE)
             # pass through detector
             soft_estimation = self.detector(rx[ind: ind + BATCH_SIZE].float(), phase='train')
-            current_loss = self.run_train_loop(est=soft_estimation,
-                                               tx=tx[ind:ind + BATCH_SIZE])
+            current_loss = self.run_train_loop(est=soft_estimation, tx=tx[ind:ind + BATCH_SIZE])
             loss += current_loss

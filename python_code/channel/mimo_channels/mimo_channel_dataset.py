@@ -26,8 +26,10 @@ class MIMOChannel:
         self.rx_length = N_ANT
 
     def _transmit(self, h: np.ndarray, snr: float) -> Tuple[np.ndarray, np.ndarray]:
-        tx_pilots = self._bits_generator.integers(0, 2, size=(self._pilots_length, N_USER))
-        tx_data = self._bits_generator.integers(0, 2, size=(self._block_length - self._pilots_length, N_USER))
+        tx_pilots = self._bits_generator.integers(0, BPSKModulator.constellation_size,
+                                                  size=(self._pilots_length, N_USER))
+        tx_data = self._bits_generator.integers(0, BPSKModulator.constellation_size,
+                                                size=(self._block_length - self._pilots_length, N_USER))
         tx = np.concatenate([tx_pilots, tx_data])
         # modulation
         s = BPSKModulator.modulate(tx.T)

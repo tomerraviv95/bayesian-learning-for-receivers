@@ -58,7 +58,7 @@ class VNETTrainer(Trainer):
         :param rx: received word
         :param h: channel coefficients
         """
-        if conf.from_scratch:
+        if not conf.fading_in_channel:
             self._initialize_detector()
         self.deep_learning_setup()
 

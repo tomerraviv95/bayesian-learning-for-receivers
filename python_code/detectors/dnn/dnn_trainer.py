@@ -50,7 +50,7 @@ class DNNTrainer(Trainer):
         return loss
 
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
-        detected_word = self.detector(rx, phase='val')
+        detected_word = self.detector(rx.float(), phase='val')
         return detected_word
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
@@ -60,7 +60,7 @@ class DNNTrainer(Trainer):
         :param tx: transmitted word
         :param rx: received word
         """
-        if conf.from_scratch:
+        if not conf.fading_in_channel:
             self._initialize_detector()
         self.deep_learning_setup()
 

@@ -8,6 +8,7 @@ from torch.optim import RMSprop, Adam, SGD
 
 from python_code import DEVICE
 from python_code.channel.channel_dataset import ChannelModelDataset
+from python_code.drift_mechanisms.drift_mechanism_wrapper import DriftMechanismWrapper
 from python_code.utils.config_singleton import Config
 from python_code.utils.metrics import calculate_ber
 
@@ -75,7 +76,7 @@ class Trainer(object):
         """
         Sets up the data loader - a generator from which we draw batches, in iterations
         """
-        self.channel_dataset = ChannelModelDataset(block_length=conf.val_block_length,
+        self.channel_dataset = ChannelModelDataset(block_length=conf.block_length,
                                                    pilots_length=conf.pilot_size,
                                                    blocks_num=conf.blocks_num)
         self.dataloader = torch.utils.data.DataLoader(self.channel_dataset)
@@ -104,28 +105,31 @@ class Trainer(object):
         data blocks for the paper.
         :return: np.ndarray
         """
-        print(conf.aug_type)
+        print(f'Evaluating concept drift of type: {conf.mechanism}')
         total_ser = 0
         # draw words for a given snr
-        transmitted_words, received_words, hs = self.channel_dataset.__getitem__(snr_list=[conf.val_snr])
+        transmitted_words, received_words, hs = self.channel_dataset.__getitem__(snr_list=[conf.snr])
         # either None or in case of DeepSIC intializes the priors
         self.init_priors()
         ser_by_word = np.zeros(transmitted_words.shape[0])
+        # initialize concept drift type
+        drift_mechanism = DriftMechanismWrapper(conf.mechanism)
         # detect sequentially
         for block_ind in range(conf.blocks_num):
+            print('*' * 20)
             # get current word and channel
             tx, h, rx = transmitted_words[block_ind], hs[block_ind], received_words[block_ind]
             # split words into data and pilot part
             tx_pilot, tx_data = tx[:conf.pilot_size], tx[conf.pilot_size:]
             rx_pilot, rx_data = rx[:conf.pilot_size], rx[conf.pilot_size:]
-            if conf.is_online_training:
+            if conf.is_online_training and drift_mechanism.is_train():
+                print('re-training')
                 # re-train the detector
                 self._online_training(tx_pilot, rx_pilot)
             # detect data part after training on the pilot part
             detected_word = self.forward(rx_data, self.probs_vec)
             # calculate accuracy
             ser = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])
-            print('*' * 20)
             print(f'current: {block_ind, ser}')
             total_ser += ser
             ser_by_word[block_ind] = ser

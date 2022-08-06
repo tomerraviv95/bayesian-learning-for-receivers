@@ -16,7 +16,8 @@ def calculate_siso_states(memory_length: int, transmitted_words: torch.Tensor) -
     :param transmitted_words: channel transmitted words
     :return: vector of length of transmitted_words with values in the range of 0,1,...,n_states-1
     """
-    states_enumerator = (2 ** torch.arange(memory_length)).reshape(1, -1).float().to(DEVICE)
+    states_enumerator = (BPSKModulator.constellation_size ** torch.arange(memory_length)).reshape(1, -1).float().to(
+        DEVICE)
     gt_states = torch.sum(transmitted_words * states_enumerator, dim=1).long()
     return gt_states
 

@@ -34,8 +34,8 @@ class SISOChannel:
                                                size=(1, self._block_length - self._pilots_length))
         b = np.concatenate([b_pilots, b_data], axis=1).reshape(1, -1)
         # add zero bits
-        padded_b = np.concatenate(
-            [np.zeros([b.shape[0], MEMORY_LENGTH - 1]), b, np.zeros([b.shape[0], MEMORY_LENGTH])], axis=1)
+        padded_b = np.concatenate([np.zeros([b.shape[0], MEMORY_LENGTH - 1]), b, np.zeros([b.shape[0], MEMORY_LENGTH])],
+                                  axis=1)
         # modulation
         s = BPSKModulator.modulate(padded_b)
         # transmit through noisy channel

@@ -44,7 +44,7 @@ class DeepSICTrainer(Trainer):
         return 'DeepSIC'
 
     def init_priors(self):
-        self.probs_vec = HALF * torch.ones(conf.val_block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
+        self.probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
 
     def _initialize_detector(self):
         self.detector = [[DeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
@@ -84,7 +84,7 @@ class DeepSICTrainer(Trainer):
         Main training function for DeepSIC trainer. Initializes the probabilities, then propagates them through the
         network, training sequentially each network and not by end-to-end manner (each one individually).
         """
-        if conf.from_scratch:
+        if not conf.fading_in_channel:
             self._initialize_detector()
         initial_probs = tx.clone()
         tx_all, rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
