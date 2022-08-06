@@ -1,25 +1,25 @@
-# data-augmentations-receivers
+# concept-drift-for-receivers
 
-*"Consistency is the playground of dull minds."* 
+*"The only constant in life is change."* 
 
---Yuval Noah Harari, Sapiens: A Brief History of Humankind.
+--Heraclitus, a Greek philosopher.
 
-# Data Augmentation for Deep Receivers
+# Concept Drift Detection for Deep Receivers
 
-Python repository for the extended paper "Data Augmentation for Deep Receivers".
+Python repository for the paper "Concept Drift Detection for Deep Receivers".
 
-Please cite our [paper](https://arxiv.org/abs/2103.13483), if the code is used for publishing research.
+Please cite our [paper](https://arxiv.org/), if the code is used for publishing research.
 
 # Table of Contents
 
 - [Introduction](#introduction)
 - [Folders Structure](#folders-structure)
   * [python_code](#python_code)
-    + [augmentations](#augmentations)
+    + [concept_drifts_mechanisms](#concept_drifts_mechanisms)
     + [channel](#channel)
     + [plotters](#plotters)
     + [utils](#utils)
-    + [vnet](#vnet)
+    + [trainers](#trainers)
   * [resources](#resources)
   * [dir_definitions](#dir_definitions)
 - [Execution](#execution)
@@ -29,7 +29,7 @@ Please cite our [paper](https://arxiv.org/abs/2103.13483), if the code is used f
 
 # Introduction
 
-This repository implements the proposed augmentation scheme for [ViterbiNet](https://ieeexplore.ieee.org/document/8815457), a machine-learning model-based detector, for the a channel with memory of L. Our proposed novel method incorporates (1) spatial and temporal clustering (2) takes into account classes diversity and (3) keeps low complexity, tailored for online communication scenarios. We explain on the different directories and subdirectories below.
+This repository implements the proposed concept drift scheme for [ViterbiNet](https://ieeexplore.ieee.org/document/8815457), a machine-learning model-based detector, for the a channel with memory of L. We explain on the different directories and subdirectories below.
 
 # Folders Structure
 
@@ -37,9 +37,9 @@ This repository implements the proposed augmentation scheme for [ViterbiNet](htt
 
 The python simulations of the simplified communication chain: symbols generation, channel transmission and detection.
 
-### augmentations
+### concept_drifts_mechanisms
 
-The proposed augmentation scheme, and the three baselines: regular training (no augmentations applied), partial-knowledge genie and full-knowledge genie. See the paper for more details on these augmentation methods. Algorithm 1 specifies our proposed self-supervised augmentation scheme.
+The proposed concept drift mechanism scheme, and the always-train baseline.
 
 ### channel 
 
@@ -50,9 +50,9 @@ In "channel.py", the ISI AWGN channel is implemented. "channel_estimation.py" is
 
 Plotting of the BER versus SNR, for Figures 3 and 4 in the paper.
 
-### vnet 
+### trainers 
 
-Includes three files:
+Includes the next files:
 
 (1) The backbone detector in "vnet_detector.py" module;
 
@@ -108,7 +108,7 @@ This code was simulated with GeForce RTX 2060 with driver version 432.00 and CUD
 
 10. Select Existing environment and navigate to where the python.exe executable of the deep_ensemble environment is installed under the interpreter setting
 
-  - For windows its usually found at C:\users\<username>\anaconda3\envs\metanet\python.exe)
+  - For windows its usually found at C:\users\<username>\anaconda3\envs\environment\python.exe)
 
   - For linux its usually found at /home/<username>/anaconda3
   
