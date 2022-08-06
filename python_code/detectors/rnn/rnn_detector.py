@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import MEMORY_LENGTH
+from python_code.channel.modulator import BPSKModulator
 from python_code.utils.trellis_utils import calculate_symbols_from_states
 
 INPUT_SIZE = 1
@@ -17,7 +18,7 @@ class RNNDetector(nn.Module):
 
     def __init__(self):
         super(RNNDetector, self).__init__()
-        self.output_size = 2 ** MEMORY_LENGTH
+        self.output_size = BPSKModulator.constellation_size ** MEMORY_LENGTH
         self.lstm = nn.LSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS).to(DEVICE)
         self.linear = nn.Linear(HIDDEN_SIZE, self.output_size).to(DEVICE)
 

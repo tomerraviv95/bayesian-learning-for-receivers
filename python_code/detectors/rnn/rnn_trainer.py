@@ -20,7 +20,6 @@ class RNNTrainer(Trainer):
 
     def __init__(self):
         self.memory_length = MEMORY_LENGTH
-        self.n_states = 2 ** self.memory_length
         self.n_user = 1
         self.n_ant = 1
         self.probs_vec = None

@@ -2,10 +2,10 @@ import numpy as np
 
 from python_code.channel.channels_hyperparams import N_ANT
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import C, H_COEF
 
 conf = Config()
-C = 0.5
-H_COEF = 0.8
+
 
 class SEDChannel:
     @staticmethod
@@ -22,8 +22,7 @@ class SEDChannel:
     @staticmethod
     def _add_fading(H: np.ndarray, n_ant: int, frame_ind: int) -> np.ndarray:
         degs_array = np.array([51, 39, 33, 21])
-        center = H_COEF
-        fade_mat = center + (1 - center) * np.cos(2 * np.pi * frame_ind / degs_array)
+        fade_mat = H_COEF + (1 - H_COEF) * np.cos(2 * np.pi * frame_ind / degs_array)
         fade_mat = np.tile(fade_mat.reshape(1, -1), [n_ant, 1])
         return H * fade_mat
 

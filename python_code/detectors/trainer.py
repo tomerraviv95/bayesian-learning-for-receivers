@@ -7,8 +7,6 @@ from torch.nn import CrossEntropyLoss, MSELoss
 from torch.optim import RMSprop, Adam, SGD
 
 from python_code import DEVICE
-from python_code.augmentations.augmenter_wrapper import AugmenterWrapper
-from python_code.augmentations.augmentations_plotting_utils import online_plotting
 from python_code.channel.channel_dataset import ChannelModelDataset
 from python_code.utils.config_singleton import Config
 from python_code.utils.metrics import calculate_ber
@@ -27,6 +25,7 @@ class Trainer(object):
     It implements the evaluation method, initializes the dataloader and the detector.
     It also defines some functions that every inherited trainer must implement.
     """
+
     def __init__(self):
         # initialize matrices, datasets and detector
         self._initialize_dataloader()
@@ -112,8 +111,6 @@ class Trainer(object):
         # either None or in case of DeepSIC intializes the priors
         self.init_priors()
         ser_by_word = np.zeros(transmitted_words.shape[0])
-        # initialize the augmentations class instance
-        augmenter_wrapper = AugmenterWrapper(conf.aug_type, conf.fading_in_channel)
         # detect sequentially
         for block_ind in range(conf.blocks_num):
             # get current word and channel
@@ -122,11 +119,8 @@ class Trainer(object):
             tx_pilot, tx_data = tx[:conf.pilot_size], tx[conf.pilot_size:]
             rx_pilot, rx_data = rx[:conf.pilot_size], rx[conf.pilot_size:]
             if conf.is_online_training:
-                # augment received words by the number of desired repeats
-                augmenter_wrapper.update_hyperparams(rx_pilot, tx_pilot)
-                y_aug, x_aug = augmenter_wrapper.augment_batch(h, rx_pilot, tx_pilot)
                 # re-train the detector
-                self._online_training(x_aug, y_aug)
+                self._online_training(tx_pilot, rx_pilot)
             # detect data part after training on the pilot part
             detected_word = self.forward(rx_data, self.probs_vec)
             # calculate accuracy
@@ -150,25 +144,3 @@ class Trainer(object):
         loss.backward()
         self.optimizer.step()
         return current_loss
-
-    def plot_regions(self):
-        """
-        Used in the augmentations plotting method under plotters module. Used for drawing the relevant figures for
-        the paper.
-        """
-        # draw words of given gamma for all snrs
-        transmitted_words, received_words, hs = self.channel_dataset.__getitem__(snr_list=[conf.val_snr])
-        augmenter_wrapper = AugmenterWrapper(conf.aug_type, conf.fading_in_channel)
-        for block_ind in range(conf.blocks_num):
-            # get current word and channel
-            transmitted_word = transmitted_words[block_ind]
-            h = hs[block_ind]
-            received_word = received_words[block_ind]
-            # split words into data and pilot part
-            x_pilot, x_data = transmitted_word[:conf.pilot_size], transmitted_word[conf.pilot_size:]
-            y_pilot, y_data = received_word[:conf.pilot_size], received_word[conf.pilot_size:]
-            # augment received words by the number of desired repeats
-            augmenter_wrapper.update_hyperparams(y_pilot, x_pilot)
-            y_aug, x_aug = augmenter_wrapper.augment_batch(h, y_pilot, x_pilot)
-            # if online training flag is on - train using pilots part
-            online_plotting(x_aug, y_aug, h)

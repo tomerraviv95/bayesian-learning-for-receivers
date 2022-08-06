@@ -2,6 +2,8 @@ from enum import Enum
 
 HALF = 0.5
 QUARTER = 0.25
+C = 0.5
+H_COEF = 0.8
 
 
 class Phase(Enum):
@@ -22,8 +24,3 @@ class ChannelModels(Enum):
 class DetectorType(Enum):
     black_box = 'black_box'
     model = 'model'
-
-
-class ModulationType(Enum):
-    BPSK = 'BPSK'
-    QPSK = 'QPSK'

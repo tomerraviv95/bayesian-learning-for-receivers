@@ -2,12 +2,10 @@ import numpy as np
 from numpy.random import default_rng
 
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import HALF, C, H_COEF
 
 conf = Config()
-
 GAMMA = 0.5  # gamma value for time decay SISO fading
-H_COEF = 0.8
-C = 0.5
 
 
 class ISIAWGNChannel:
@@ -54,5 +52,5 @@ class ISIAWGNChannel:
     def _sample_noise_vector(row: int, col: int, snr: float) -> np.ndarray:
         noise_generator = default_rng(seed=conf.seed)
         snr_value = 10 ** (snr / 10)
-        w = (snr_value ** (-0.5)) * noise_generator.standard_normal((row, col))
+        w = (snr_value ** (-HALF)) * noise_generator.standard_normal((row, col))
         return w
