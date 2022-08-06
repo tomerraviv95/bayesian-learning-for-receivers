@@ -10,11 +10,20 @@ from python_code.detectors.deepsic.deep_sic_detector import DeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF
-from python_code.utils.trellis_utils import prob_to_BPSK_symbol
 
 conf = Config()
 ITERATIONS = 5
 EPOCHS = 250
+
+
+def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
+    """
+    prob_to_symbol(x:PyTorch/Numpy Tensor/Array)
+    Converts Probabilities to BPSK Symbols by hard threshold: [0,0.5] -> '-1', [0.5,1] -> '+1'
+    :param p: probabilities vector
+    :return: symbols vector
+    """
+    return torch.sign(p - HALF)
 
 
 class DeepSICTrainer(Trainer):
