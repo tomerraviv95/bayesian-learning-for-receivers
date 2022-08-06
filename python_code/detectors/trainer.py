@@ -1,5 +1,5 @@
 import random
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 import torch
@@ -99,19 +99,18 @@ class Trainer(object):
         """
         pass
 
-    def evaluate(self) -> Union[float, np.ndarray]:
+    def evaluate(self) -> List[float]:
         """
         The online evaluation run. Main function for running the experiments of sequential transmission of pilots and
         data blocks for the paper.
-        :return: np.ndarray
+        :return: list of ber per timestep
         """
         print(f'Evaluating concept drift of type: {conf.mechanism}')
-        total_ser = 0
+        total_ber = []
         # draw words for a given snr
         transmitted_words, received_words, hs = self.channel_dataset.__getitem__(snr_list=[conf.snr])
         # either None or in case of DeepSIC intializes the priors
         self.init_priors()
-        ser_by_word = np.zeros(transmitted_words.shape[0])
         # initialize concept drift type
         drift_mechanism = DriftMechanismWrapper(conf.mechanism)
         # detect sequentially
@@ -131,13 +130,11 @@ class Trainer(object):
             # calculate accuracy
             ser = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])
             print(f'current: {block_ind, ser}')
-            total_ser += ser
-            ser_by_word[block_ind] = ser
+            total_ber += ser
             self.init_priors()
 
-        total_ser /= conf.blocks_num
-        print(f'Final ser: {total_ser}')
-        return total_ser
+        print(f'Final ser: {sum(total_ber)/len(total_ber)}')
+        return total_ber
 
     def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor) -> float:
         # calculate loss

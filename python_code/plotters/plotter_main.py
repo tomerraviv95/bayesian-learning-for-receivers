@@ -7,7 +7,7 @@ if __name__ == '__main__':
     trial_num = 1  # number of trials per point estimate, used to reduce noise by averaging results of multiple runs
     run_params_obj = RunParams(run_over=run_over,
                                trial_num=trial_num)
-    label_name = PlotType.Always_VS_Random
+    label_name = PlotType.Always_VS_Random_SNR
     print(label_name.name)
     params_dicts, methods_list, values, xlabel, ylabel = get_config(label_name.name)
     all_curves = []

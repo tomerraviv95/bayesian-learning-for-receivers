@@ -42,7 +42,7 @@ def get_linestyle(method_name: str) -> str:
 def get_marker(method_name: str) -> str:
     if 'Always' in method_name:
         return '.'
-    elif 'Always' in method_name:
+    elif 'Random' in method_name:
         return 'X'
     else:
         raise ValueError('No such method!!!')
@@ -51,7 +51,7 @@ def get_marker(method_name: str) -> str:
 def get_color(method_name: str) -> str:
     if 'Always' in method_name:
         return 'b'
-    elif 'Always' in method_name:
+    elif 'Random' in method_name:
         return 'black'
     else:
         raise ValueError('No such method!!!')

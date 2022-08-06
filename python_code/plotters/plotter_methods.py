@@ -2,8 +2,6 @@ import os
 from collections import namedtuple
 from typing import Tuple, List, Dict, Union
 
-import numpy as np
-
 from dir_definitions import CONFIG_RUNS_DIR
 from python_code.detectors.trainer import Trainer
 from python_code.evaluate import CHANNEL_TYPE_TO_TRAINER_DICT
@@ -34,8 +32,8 @@ def set_method_name(conf: Config, method_name: str, params_dict: Dict[str, Union
     return name
 
 
-def add_avg_ser(all_curves: List[Tuple[float, str]], conf: Config, method_name: str, name: str, run_over: bool,
-                trial_num: int, trainer: Trainer):
+def add_ser(all_curves: List[Tuple[List[float], str]], conf: Config, method_name: str, name: str, run_over: bool,
+            trial_num: int, trainer: Trainer):
     """
     Run the experiments #trial_num times, averaging over the whole run's aggregated ser.
     """
@@ -47,8 +45,7 @@ def add_avg_ser(all_curves: List[Tuple[float, str]], conf: Config, method_name: 
                            method_name=method_name + name,
                            trial=trial)
         total_ser.append(ser)
-    avg_ser = np.average(total_ser)
-    all_curves.append((avg_ser, method_name))
+    all_curves.append((total_ser, method_name))
 
 
 def compute_ser_for_method(all_curves: List[Tuple[float, str]], method: str, params_dict: Dict[str, Union[int, str]],
@@ -59,4 +56,4 @@ def compute_ser_for_method(all_curves: List[Tuple[float, str]], method: str, par
     full_method_name = f'{trainer.__str__()} - {method}'
     print(full_method_name)
     name = set_method_name(conf, full_method_name, params_dict)
-    add_avg_ser(all_curves, conf, full_method_name, name, run_params_obj.run_over, run_params_obj.trial_num, trainer)
+    add_ser(all_curves, conf, full_method_name, name, run_params_obj.run_over, run_params_obj.trial_num, trainer)
