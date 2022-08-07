@@ -97,9 +97,13 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
 
     cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
     if plot_type == 'plot_by_blocks':
-        MARKER_EVERY = 5
+        MARKER_EVERY = 10
+        x_ticks = [1].extend(values[MARKER_EVERY-1::MARKER_EVERY])
+        x_labels = [1].extend(values[MARKER_EVERY-1::MARKER_EVERY])
     elif plot_type == 'plot_by_snrs':
         MARKER_EVERY = 1
+        x_ticks = values
+        x_labels = values
     else:
         raise ValueError("No such plot type!")
 
@@ -111,7 +115,7 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
                  linestyle=get_linestyle(method_name), linewidth=2.2,
                  markevery=MARKER_EVERY)
 
-    plt.xticks(values, values)
+    plt.xticks(ticks=x_ticks, labels=x_labels)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(which='both', ls='--')

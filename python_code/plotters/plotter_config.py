@@ -33,14 +33,14 @@ def get_config(label_name: str) -> Tuple[List[Dict], list, list, str, str, str]:
         plot_type = 'plot_by_snrs'
     elif label_name == PlotType.Always_VS_Random_By_Block.name:
         params_dicts = [
-            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
              'fading_in_channel': True, 'from_scratch': False},
         ]
         methods_list = [
             'Always',
             'Random'
         ]
-        values = list(range(1, 51))
+        values = list(range(1, 101))
         xlabel, ylabel = 'block_index', 'BER'
         plot_type = 'plot_by_blocks'
     else:
