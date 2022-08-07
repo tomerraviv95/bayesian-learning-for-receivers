@@ -7,9 +7,10 @@ if __name__ == '__main__':
     trial_num = 1  # number of trials per point estimate, used to reduce noise by averaging results of multiple runs
     run_params_obj = RunParams(run_over=run_over,
                                trial_num=trial_num)
-    label_name = PlotType.Always_VS_Random_SNR
+    label_name = PlotType.Always_VS_Random_By_Block # Always_VS_Random_By_SNR, Always_VS_Random_By_Block
+
     print(label_name.name)
-    params_dicts, methods_list, values, xlabel, ylabel = get_config(label_name.name)
+    params_dicts, methods_list, values, xlabel, ylabel, plot_type = get_config(label_name.name)
     all_curves = []
 
     for method in methods_list:
@@ -18,4 +19,4 @@ if __name__ == '__main__':
             print(params_dict)
             compute_ser_for_method(all_curves, method, params_dict, run_params_obj)
 
-    plot_by_values(all_curves, values, xlabel, ylabel)
+    plot_by_values(all_curves, values, xlabel, ylabel, plot_type)

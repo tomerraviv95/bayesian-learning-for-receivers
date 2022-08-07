@@ -11,9 +11,9 @@ fading_in_channel: False # If the channel is fading/non-fading. values: [True, F
 snr: 12 # validation SNR value. values: float.
 
 # protocol
-block_length: 2250 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 250 # pilot bits
-blocks_num: 25 # number of validation frames. values: int.
+block_length: 5100 # coherence block time, total size of pilot + data. values: int.
+pilot_size: 100 # pilot bits
+blocks_num: 100 # number of validation frames. values: int.
 
 # online training hyperparameters
 is_online_training: True # Whether to run the online training (as in ViterbiNet). values: [True, False].

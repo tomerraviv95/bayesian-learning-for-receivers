@@ -81,7 +81,7 @@ def get_ser_plot(dec: Trainer, run_over: bool, method_name: str, trial=None):
 
 
 def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values: List[float], xlabel: str,
-                   ylabel: str):
+                   ylabel: str, plot_type: str):
     # path for the saved figure
     current_day_time = datetime.datetime.now()
     folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'
@@ -95,14 +95,21 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
         if all_curves[i][1] not in names:
             names.append(all_curves[i][1])
 
-    cur_name, mean_sers_dict = populate_mean_sers_dict(all_curves, names)
+    cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
+    if plot_type == 'plot_by_blocks':
+        MARKER_EVERY = 5
+    elif plot_type == 'plot_by_snrs':
+        MARKER_EVERY = 1
+    else:
+        raise ValueError("No such plot type!")
 
     # plots all methods
     for method_name in names:
-        plt.plot(values, mean_sers_dict[method_name], label=method_name,
+        plt.plot(values, sers_dict[method_name], label=method_name,
                  color=get_color(method_name),
                  marker=get_marker(method_name), markersize=11,
-                 linestyle=get_linestyle(method_name), linewidth=2.2)
+                 linestyle=get_linestyle(method_name), linewidth=2.2,
+                 markevery=MARKER_EVERY)
 
     plt.xticks(values, values)
     plt.xlabel(xlabel)
@@ -116,15 +123,21 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
     plt.show()
 
 
-def populate_mean_sers_dict(all_curves: List[Tuple[float, str]], names: List[str]) -> Tuple[
+def populate_sers_dict(all_curves: List[Tuple[float, str]], names: List[str], plot_type: str) -> Tuple[
     str, Dict[str, List[np.ndarray]]]:
-    mean_sers_dict = {}
+    sers_dict = {}
     for method_name in names:
-        mean_sers = []
+        sers_list = []
         for ser, cur_name in all_curves:
-            mean_ser = np.mean(ser)
             if cur_name != method_name:
                 continue
-            mean_sers.append(mean_ser)
-        mean_sers_dict[method_name] = mean_sers
-    return cur_name, mean_sers_dict
+            if plot_type == 'plot_by_blocks':
+                agg_ser = (np.cumsum(ser[0]) / np.arange(1, len(ser[0]) + 1))
+                sers_list.extend(agg_ser)
+            elif plot_type == 'plot_by_snrs':
+                mean_ser = np.mean(ser)
+                sers_list.append(mean_ser)
+            else:
+                raise ValueError("No such plot type!")
+        sers_dict[method_name] = sers_list
+    return cur_name, sers_dict

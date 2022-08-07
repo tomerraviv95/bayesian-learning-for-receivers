@@ -1,5 +1,5 @@
 import random
-from typing import Union, List
+from typing import List
 
 import numpy as np
 import torch
@@ -128,12 +128,12 @@ class Trainer(object):
             # detect data part after training on the pilot part
             detected_word = self.forward(rx_data, self.probs_vec)
             # calculate accuracy
-            ser = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])
-            print(f'current: {block_ind, ser}')
-            total_ber += ser
+            ber = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])
+            print(f'current: {block_ind, ber}')
+            total_ber.append(ber)
             self.init_priors()
 
-        print(f'Final ser: {sum(total_ber)/len(total_ber)}')
+        print(f'Final ser: {sum(total_ber) / len(total_ber)}')
         return total_ber
 
     def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor) -> float:
