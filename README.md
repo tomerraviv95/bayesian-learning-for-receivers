@@ -1,12 +1,11 @@
-# concept-drift-for-receivers
+# bayesian-learning-for-receivers
 
-*"The only constant in life is change."* 
+*...* 
 
---Heraclitus, a Greek philosopher.
+# Bayesian Learning for Deep Receivers
 
-# Concept Drift Detection for Deep Receivers
-
-Python repository for the paper "Concept Drift Detection for Deep Receivers".
+Python repository for the paper "Bayesian Learning for Deep Receivers
+".
 
 Please cite our [paper](https://arxiv.org/), if the code is used for publishing research.
 
@@ -15,7 +14,6 @@ Please cite our [paper](https://arxiv.org/), if the code is used for publishing 
 - [Introduction](#introduction)
 - [Folders Structure](#folders-structure)
   * [python_code](#python_code)
-    + [concept_drifts_mechanisms](#concept_drifts_mechanisms)
     + [channel](#channel)
     + [plotters](#plotters)
     + [utils](#utils)
@@ -36,10 +34,6 @@ This repository implements the proposed concept drift scheme for [ViterbiNet](ht
 ## python_code 
 
 The python simulations of the simplified communication chain: symbols generation, channel transmission and detection.
-
-### concept_drifts_mechanisms
-
-The proposed concept drift mechanism scheme, and the always-train baseline.
 
 ### channel 
 
