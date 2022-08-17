@@ -19,6 +19,3 @@ blocks_num: 25 # number of validation frames. values: int.
 is_online_training: True # Whether to run the online training (as in ViterbiNet). values: [True, False].
 loss_type: 'CrossEntropy' # Loss type. values: 'BCE','CrossEntropy','MSE'.
 optimizer_type: 'Adam' # Optimizer type. values: 'Adam','RMSprop','SGD'.
-
-# concept drift mechanism
-mechanism: 'always' # ['always','random',...]

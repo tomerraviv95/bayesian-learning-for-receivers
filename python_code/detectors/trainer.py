@@ -8,7 +8,6 @@ from torch.optim import RMSprop, Adam, SGD
 
 from python_code import DEVICE
 from python_code.channel.channel_dataset import ChannelModelDataset
-from python_code.drift_mechanisms.drift_mechanism_wrapper import DriftMechanismWrapper
 from python_code.utils.config_singleton import Config
 from python_code.utils.metrics import calculate_ber
 
@@ -105,14 +104,11 @@ class Trainer(object):
         data blocks for the paper.
         :return: list of ber per timestep
         """
-        print(f'Evaluating concept drift of type: {conf.mechanism}')
         total_ber = []
         # draw words for a given snr
         transmitted_words, received_words, hs = self.channel_dataset.__getitem__(snr_list=[conf.snr])
         # either None or in case of DeepSIC intializes the priors
         self.init_priors()
-        # initialize concept drift type
-        drift_mechanism = DriftMechanismWrapper(conf.mechanism)
         # detect sequentially
         for block_ind in range(conf.blocks_num):
             print('*' * 20)
@@ -121,8 +117,7 @@ class Trainer(object):
             # split words into data and pilot part
             tx_pilot, tx_data = tx[:conf.pilot_size], tx[conf.pilot_size:]
             rx_pilot, rx_data = rx[:conf.pilot_size], rx[conf.pilot_size:]
-            if conf.is_online_training and drift_mechanism.is_train():
-                print('re-training')
+            if conf.is_online_training:
                 # re-train the detector
                 self._online_training(tx_pilot, rx_pilot)
             # detect data part after training on the pilot part
