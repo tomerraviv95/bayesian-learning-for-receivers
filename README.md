@@ -1,6 +1,8 @@
 # bayesian-learning-for-receivers
 
-*...* 
+*”A Bayesian version will usually make things better.”* 
+
+-- [Andrew Gelman, Columbia University](http://www.stat.columbia.edu/~gelman/book/gelman_quotes.pdf). 
 
 # Bayesian Learning for Deep Receivers
 
