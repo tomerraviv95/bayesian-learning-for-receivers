@@ -5,14 +5,14 @@ seed: 0 # run seed
 # channel
 channel_type: 'SISO' # Channel type values: ['SISO','MIMO'].
 channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
-detector_type: 'model' # 'model' or 'black_box'
+detector_type: 'ensemble' # 'model' or 'black_box' or 'ensemble'
 linear: True # channel linearity. Boolean value.
 fading_in_channel: False # If the channel is fading/non-fading. values: [True, False]
 snr: 12 # validation SNR value. values: float.
 
 # protocol
 block_length: 5200 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 200 # pilot bits
+pilot_size: 50 # pilot bits
 blocks_num: 25 # number of validation frames. values: int.
 
 # online training hyperparameters
@@ -21,4 +21,5 @@ loss_type: 'CrossEntropy' # Loss type. values: 'BCE','CrossEntropy','MSE'.
 optimizer_type: 'Adam' # Optimizer type. values: 'Adam','RMSprop','SGD'.
 
 # ensemble hyperparams
-dropout_rate: 0.05
+dropout_rate: 0.4 # the overall dropout rate
+alpha: 9 # number of detectors in the ensemble

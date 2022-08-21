@@ -3,7 +3,7 @@ import torch
 from python_code.channel.channels_hyperparams import MEMORY_LENGTH
 from python_code.channel.modulator import BPSKModulator
 from python_code.detectors.trainer import Trainer
-from python_code.detectors.vnet.vnet_detector import VNETDetector
+from python_code.detectors.vnet_ensemble.vnet_ensemble_detector import VNETEnsembleDetector
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
 from python_code.utils.trellis_utils import calculate_siso_states
@@ -12,9 +12,9 @@ conf = Config()
 EPOCHS = 500
 
 
-class VNETTrainer(Trainer):
+class VNETEnsembleTrainer(Trainer):
     """
-    Trainer for the ViterbiNet model.
+    Trainer for the ViterbiNet Ensemble model.
     """
 
     def __init__(self):
@@ -27,13 +27,13 @@ class VNETTrainer(Trainer):
         super().__init__()
 
     def __str__(self):
-        return 'ViterbiNet'
+        return 'ViterbiNet Ensemble'
 
     def _initialize_detector(self):
         """
         Loads the ViterbiNet detector
         """
-        self.detector = VNETDetector(n_states=self.n_states, dropout_rate=conf.dropout_rate)
+        self.detector = VNETEnsembleDetector(n_states=self.n_states, alpha=conf.alpha)
 
     def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor) -> torch.Tensor:
         """

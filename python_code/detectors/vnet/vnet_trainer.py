@@ -33,7 +33,7 @@ class VNETTrainer(Trainer):
         """
         Loads the ViterbiNet detector
         """
-        self.detector = VNETDetector(n_states=self.n_states, dropout_rate=conf.dropout_rate)
+        self.detector = VNETDetector(n_states=self.n_states)
 
     def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor) -> torch.Tensor:
         """
