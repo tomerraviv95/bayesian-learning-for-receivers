@@ -39,16 +39,17 @@ class VNETDetector(nn.Module):
     This implements the VA decoder by a parameterization of the cost calculation by an NN for each stage
     """
 
-    def __init__(self, n_states: int):
+    def __init__(self, n_states: int, dropout_rate=0):
 
         super(VNETDetector, self).__init__()
         self.n_states = n_states
         self.transition_table_array = create_transition_table(n_states)
         self.transition_table = torch.Tensor(self.transition_table_array).to(DEVICE)
-        self._initialize_dnn()
+        self._initialize_dnn(dropout_rate)
 
-    def _initialize_dnn(self):
+    def _initialize_dnn(self, dropout_rate):
         layers = [nn.Linear(1, HIDDEN1_SIZE),
+                  nn.Dropout(dropout_rate),
                   nn.ReLU(),
                   nn.Linear(HIDDEN1_SIZE, self.n_states)]
         self.net = nn.Sequential(*layers).to(DEVICE)
