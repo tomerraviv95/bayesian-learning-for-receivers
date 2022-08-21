@@ -5,7 +5,7 @@ seed: 0 # run seed
 # channel
 channel_type: 'SISO' # Channel type values: ['SISO','MIMO'].
 channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
-detector_type: 'model' # 'model' or 'black_box'
+detector_type: 'model' # 'model' or 'black_box' or 'ensemble'
 linear: True # channel linearity. Boolean value.
 fading_in_channel: False # If the channel is fading/non-fading. values: [True, False]
 snr: 12 # validation SNR value. values: float.
@@ -20,5 +20,6 @@ is_online_training: True # Whether to run the online training (as in ViterbiNet)
 loss_type: 'CrossEntropy' # Loss type. values: 'BCE','CrossEntropy','MSE'.
 optimizer_type: 'Adam' # Optimizer type. values: 'Adam','RMSprop','SGD'.
 
-# concept drift mechanism
-mechanism: 'random' # ['always','random',...]
+# ensemble hyperparams
+dropout_rate: 0.4 # the overall dropout rate
+alpha: 9 # number of detectors in the ensemble

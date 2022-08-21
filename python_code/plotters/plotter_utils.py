@@ -31,7 +31,9 @@ MARKER_EVERY = 5
 
 
 def get_linestyle(method_name: str) -> str:
-    if 'ViterbiNet' in method_name or 'DeepSIC' in method_name:
+    if 'Ensemble' in method_name:
+        return 'dotted'
+    elif 'ViterbiNet' in method_name or 'DeepSIC' in method_name:
         return 'solid'
     elif 'RNN' in method_name or 'DNN' in method_name:
         return 'dashed'
@@ -40,19 +42,15 @@ def get_linestyle(method_name: str) -> str:
 
 
 def get_marker(method_name: str) -> str:
-    if 'Always' in method_name:
+    if 'Regular' in method_name:
         return '.'
-    elif 'Random' in method_name:
-        return 'X'
     else:
         raise ValueError('No such method!!!')
 
 
 def get_color(method_name: str) -> str:
-    if 'Always' in method_name:
+    if 'Regular' in method_name:
         return 'b'
-    elif 'Random' in method_name:
-        return 'black'
     else:
         raise ValueError('No such method!!!')
 
@@ -98,8 +96,8 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
     cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
     if plot_type == 'plot_by_blocks':
         MARKER_EVERY = 10
-        x_ticks = [1].extend(values[MARKER_EVERY-1::MARKER_EVERY])
-        x_labels = [1].extend(values[MARKER_EVERY-1::MARKER_EVERY])
+        x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
+        x_labels = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
     elif plot_type == 'plot_by_snrs':
         MARKER_EVERY = 1
         x_ticks = values
