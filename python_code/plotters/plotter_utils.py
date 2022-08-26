@@ -49,10 +49,16 @@ def get_marker(method_name: str) -> str:
 
 
 def get_color(method_name: str) -> str:
-    if 'Regular' in method_name:
+    if 'Ensemble' in method_name:
+        return 'green'
+    elif 'ViterbiNet' in method_name:
         return 'b'
+    elif 'DeepSIC' in method_name:
+        return 'red'
+    elif 'RNN' in method_name or 'DNN' in method_name:
+        return 'black'
     else:
-        raise ValueError('No such method!!!')
+        raise ValueError('No such detector!!!')
 
 
 def get_ser_plot(dec: Trainer, run_over: bool, method_name: str, trial=None):
@@ -107,7 +113,7 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
 
     # plots all methods
     for method_name in names:
-        plt.plot(values, sers_dict[method_name], label=method_name,
+        plt.plot(values, sers_dict[method_name], label=method_name.split('-')[0],
                  color=get_color(method_name),
                  marker=get_marker(method_name), markersize=11,
                  linestyle=get_linestyle(method_name), linewidth=2.2,

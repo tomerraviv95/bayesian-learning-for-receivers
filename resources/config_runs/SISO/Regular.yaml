@@ -21,5 +21,5 @@ loss_type: 'CrossEntropy' # Loss type. values: 'BCE','CrossEntropy','MSE'.
 optimizer_type: 'Adam' # Optimizer type. values: 'Adam','RMSprop','SGD'.
 
 # ensemble hyperparams
-dropout_rate: 0.4 # the overall dropout rate
-alpha: 9 # number of detectors in the ensemble
+dropout_rate: 0.25 # the overall dropout rate
+alpha: 5 # number of detectors in the ensemble
