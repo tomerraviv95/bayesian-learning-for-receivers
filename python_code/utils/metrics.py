@@ -11,5 +11,6 @@ def calculate_ber(prediction: torch.Tensor, target: torch.Tensor) -> float:
     """
     prediction = prediction.long()
     target = target.long()
-    bits_acc = torch.mean(torch.eq(prediction, target).float()).item()
+    equal_vec = torch.eq(prediction, target).float()
+    bits_acc = torch.mean(equal_vec).item()
     return 1 - bits_acc

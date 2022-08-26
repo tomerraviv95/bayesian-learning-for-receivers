@@ -5,8 +5,9 @@ import torch.nn as nn
 from python_code import DEVICE
 from python_code.utils.constants import Phase
 
-HIDDEN1_SIZE = 75
-HIDDEN2_SIZE = 16
+HIDDEN1_SIZE = 64
+HIDDEN2_SIZE = 32
+HIDDEN3_SIZE = 16
 
 
 def create_transition_table(n_states: int) -> np.ndarray:
@@ -49,12 +50,14 @@ class VNETDetector(nn.Module):
         self._initialize_dnn(dropout_rate)
 
     def _initialize_dnn(self, dropout_rate):
-        linear_layer1 = nn.Linear(1, HIDDEN1_SIZE)
         dropout = nn.Dropout(dropout_rate)
         relu = nn.ReLU()
-        linear_layer2 = nn.Linear(HIDDEN1_SIZE, self.n_states)
-        self.train_layers = nn.ModuleList([linear_layer1, relu, linear_layer2]).to(DEVICE)
-        self.test_layers = nn.ModuleList([linear_layer1, dropout, relu, linear_layer2]).to(DEVICE)
+        linear_layer1 = nn.Linear(1, HIDDEN1_SIZE)
+        linear_layer2 = nn.Linear(HIDDEN1_SIZE, HIDDEN2_SIZE)
+        linear_layer3 = nn.Linear(HIDDEN2_SIZE, self.n_states)
+        self.layers = nn.ModuleList([linear_layer1, dropout, relu,
+                                     linear_layer2, relu,
+                                     linear_layer3]).to(DEVICE)
 
     def forward(self, rx: torch.Tensor, phase: str) -> torch.Tensor:
         """
@@ -69,7 +72,7 @@ class VNETDetector(nn.Module):
 
         if phase == Phase.TEST:
             out = rx.clone()
-            for layer in self.test_layers:
+            for layer in self.layers:
                 out = layer(out)
             detected_word = torch.zeros(rx.shape).to(DEVICE)
             for i in range(rx.shape[0]):
@@ -82,6 +85,6 @@ class VNETDetector(nn.Module):
             return detected_word
         else:
             out = rx.clone()
-            for layer in self.train_layers:
+            for layer in self.layers:
                 out = layer(out)
             return out

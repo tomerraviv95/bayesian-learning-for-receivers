@@ -2,7 +2,7 @@ from enum import Enum
 
 HALF = 0.5
 QUARTER = 0.25
-C = 0.5
+C = 1
 H_COEF = 0.8
 
 

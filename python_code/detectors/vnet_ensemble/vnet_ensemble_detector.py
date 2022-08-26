@@ -19,7 +19,7 @@ class VNETEnsembleDetector(nn.Module):
         super(VNETEnsembleDetector, self).__init__()
         self.alpha = alpha
         self.n_states = n_states
-        self.detector = VNETDetector(n_states=n_states, dropout_rate=conf.dropout_rate)
+        self.detector = VNETDetector(n_states=self.n_states, dropout_rate=conf.dropout_rate)
 
     def forward(self, rx: torch.Tensor, phase: str) -> torch.Tensor:
         """
@@ -29,11 +29,12 @@ class VNETEnsembleDetector(nn.Module):
         :returns if in 'train' - the estimated priors [batch_size,transmission_length,n_states]
         if in 'val' - the detected words [n_batch,transmission_length]
         """
-        out = torch.zeros([rx.shape[0], self.n_states]).to(DEVICE)
-        for i in range(self.alpha):
-            cur_out = self.detector(rx, phase=phase)
-            out += cur_out
         if phase == Phase.TEST:
-            return ((out / self.alpha) > 0.5).type(out.dtype)
+            out = torch.zeros([rx.shape[0], rx.shape[1]]).to(DEVICE)
+            for i in range(self.alpha):
+                cur_out = self.detector(rx, phase=phase)
+                out += cur_out
+            out /= self.alpha
+            return (out > 0.5).type(out.dtype)
         else:
-            return out / self.alpha
+            return self.detector(rx, phase=phase)
