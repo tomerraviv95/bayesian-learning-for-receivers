@@ -17,13 +17,13 @@ class VNETEnsembleDetector(nn.Module):
     def __init__(self, n_states: int, alpha=1):
 
         super(VNETEnsembleDetector, self).__init__()
-        self.alpha = alpha
-        self.n_states = n_states
-        self.detector = VNETDetector(n_states=self.n_states, dropout_rate=conf.dropout_rate)
+        self._alpha = alpha
+        self._n_states = n_states
+        self._detector = VNETDetector(n_states=self._n_states, dropout_rate=conf.dropout_rate)
 
     def forward(self, rx: torch.Tensor, phase: str) -> torch.Tensor:
         """
-        The forward pass of the ViterbiNet algorithm
+        The forward pass of the Ensemble ViterbiNet algorithm - MC dropout
         :param rx: input values, size [batch_size,transmission_length]
         :param phase: 'train' or 'val'
         :returns if in 'train' - the estimated priors [batch_size,transmission_length,n_states]
@@ -31,10 +31,10 @@ class VNETEnsembleDetector(nn.Module):
         """
         if phase == Phase.TEST:
             out = torch.zeros([rx.shape[0], rx.shape[1]]).to(DEVICE)
-            for i in range(self.alpha):
-                cur_out = self.detector(rx, phase=phase)
+            for i in range(self._alpha):
+                cur_out = self._detector(rx, phase=phase)
                 out += cur_out
-            out /= self.alpha
+            out /= self._alpha
             return (out > 0.5).type(out.dtype)
         else:
-            return self.detector(rx, phase=phase)
+            return self._detector(rx, phase=phase)
