@@ -71,7 +71,7 @@ class VNETDetector(nn.Module):
             for i in range(rx.shape[0]):
                 # get the lsb of the state
                 detected_word[i] = torch.argmin(in_prob, dim=1) % 2
-                confidence_word[i] = -torch.min(in_prob, dim=1)
+                confidence_word[i] = torch.amax(torch.softmax(-in_prob, dim=1), dim=1)
                 # run one Viterbi stage
                 out_prob = acs_block(in_prob, -priors[i], self.transition_table, self.n_states)
                 # update in-probabilities for next layer

@@ -1,9 +1,13 @@
+import os
+
 from python_code.detectors.deepsic.deep_sic_trainer import DeepSICTrainer
 from python_code.detectors.dnn.dnn_trainer import DNNTrainer
 from python_code.detectors.rnn.rnn_trainer import RNNTrainer
 from python_code.detectors.vnet.vnet_trainer import VNETTrainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import ChannelModes, DetectorType
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 conf = Config()
 

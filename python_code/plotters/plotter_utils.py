@@ -8,6 +8,7 @@ import numpy as np
 
 from dir_definitions import FIGURES_DIR, PLOTS_DIR
 from python_code.detectors.trainer import Trainer
+from python_code.plotters.plotter_config import PlotType
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 
@@ -100,11 +101,11 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
             names.append(all_curves[i][0])
 
     cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
-    if plot_type == 'plot_by_blocks':
+    if plot_type == PlotType.BY_BLOCK.name:
         MARKER_EVERY = 10
         x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
         x_labels = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
-    elif plot_type == 'plot_by_snrs':
+    elif plot_type == PlotType.BY_SNR.name:
         MARKER_EVERY = 1
         x_ticks = values
         x_labels = values
@@ -130,8 +131,9 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
                 bbox_inches='tight')
     plt.show()
 
+
 def plot_by_values2(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values: List[float], xlabel: str,
-                   ylabel: str, plot_type: str):
+                    ylabel: str, plot_type: str):
     # path for the saved figure
     current_day_time = datetime.datetime.now()
     folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'

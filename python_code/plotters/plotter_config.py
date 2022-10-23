@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Tuple, List, Dict
 
+import numpy as np
+
 from python_code.utils.constants import ChannelModes, DetectorType
 
 
@@ -10,9 +12,9 @@ class PlotType(Enum):
     BY_RELIABILITY = 'By_Reliability'
 
 
-def get_config(label_name: str) -> Tuple[List[Dict], list, list, str, str, str]:
+def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
     # figure 1
-    if label_name == PlotType.BY_SNR.name:
+    if plot_type == PlotType.BY_SNR:
         params_dicts = [
             {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
              'fading_in_channel': True, 'from_scratch': False},
@@ -26,37 +28,31 @@ def get_config(label_name: str) -> Tuple[List[Dict], list, list, str, str, str]:
              'fading_in_channel': True, 'from_scratch': False},
         ]
         methods_list = [
-            'Always',
-            'Random'
+            'ViterbiNet'
         ]
         values = list(range(9, 14))
         xlabel, ylabel = 'SNR', 'BER'
-        plot_type = 'plot_by_snrs'
-    elif label_name == PlotType.BY_SNR.name:
+    elif plot_type == PlotType.BY_BLOCK:
         params_dicts = [
             {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
              'fading_in_channel': True, 'from_scratch': False},
         ]
         methods_list = [
-            'Always',
-            'Random'
+            'ViterbiNet'
         ]
         values = list(range(1, 101))
         xlabel, ylabel = 'block_index', 'BER'
-        plot_type = 'plot_by_blocks'
-    elif label_name == PlotType.BY_SNR.name:
+    elif plot_type == PlotType.BY_RELIABILITY.name:
         params_dicts = [
             {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
              'fading_in_channel': True, 'from_scratch': False},
         ]
         methods_list = [
-            'Always',
-            'Random'
+            'ViterbiNet'
         ]
-        values = list(range(1, 101))
-        xlabel, ylabel = 'block_index', 'BER'
-        plot_type = 'plot_by_blocks'
+        values = np.linspace(start=0.1, stop=1, step=0.1)
+        xlabel, ylabel = 'Reliability', 'Reliability'
     else:
         raise ValueError('No such plot type!!!')
 
-    return params_dicts, methods_list, values, xlabel, ylabel, plot_type
+    return params_dicts, methods_list, values, xlabel, ylabel

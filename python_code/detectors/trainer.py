@@ -124,9 +124,9 @@ class Trainer(object):
             # detect data part after training on the pilot part
             detected_word, confidence_word = self.forward(rx_data, self.probs_vec)
             # calculate accuracy
-            ber = calculate_ber(detected_word, tx_data)  # [:, :rx.shape[1]]
-            correct_values = confidence_word[torch.eq(tx_data, detected_word) == 1].values
-            error_values = confidence_word[torch.eq(tx_data, detected_word) == 0].values
+            ber = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])  #
+            correct_values = confidence_word[torch.eq(tx_data[:, :rx.shape[1]], detected_word)].tolist()
+            error_values = confidence_word[~torch.eq(tx_data[:, :rx.shape[1]], detected_word)].tolist()
             print(f'current: {block_ind, ber}')
             total_ber.append(ber)
             correct_values_list.extend(correct_values)
