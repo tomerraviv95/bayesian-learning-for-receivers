@@ -96,8 +96,54 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
     plt.figure()
     names = []
     for i in range(len(all_curves)):
-        if all_curves[i][1] not in names:
-            names.append(all_curves[i][1])
+        if all_curves[i][0] not in names:
+            names.append(all_curves[i][0])
+
+    cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
+    if plot_type == 'plot_by_blocks':
+        MARKER_EVERY = 10
+        x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
+        x_labels = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
+    elif plot_type == 'plot_by_snrs':
+        MARKER_EVERY = 1
+        x_ticks = values
+        x_labels = values
+    else:
+        raise ValueError("No such plot type!")
+
+    # plots all methods
+    for method_name in names:
+        plt.plot(values, sers_dict[method_name], label=method_name,
+                 color=get_color(method_name),
+                 marker=get_marker(method_name), markersize=11,
+                 linestyle=get_linestyle(method_name), linewidth=2.2,
+                 markevery=MARKER_EVERY)
+
+    plt.xticks(ticks=x_ticks, labels=x_labels)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.grid(which='both', ls='--')
+    plt.legend(loc='lower left', prop={'size': 15})
+    plt.yscale('log')
+    trainer_name = cur_name.split(' ')[0]
+    plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'coded_ber_versus_snrs_{trainer_name}.png'),
+                bbox_inches='tight')
+    plt.show()
+
+def plot_by_values2(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values: List[float], xlabel: str,
+                   ylabel: str, plot_type: str):
+    # path for the saved figure
+    current_day_time = datetime.datetime.now()
+    folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'
+    if not os.path.isdir(os.path.join(FIGURES_DIR, folder_name)):
+        os.makedirs(os.path.join(FIGURES_DIR, folder_name))
+
+    # extract names from simulated plots
+    plt.figure()
+    names = []
+    for i in range(len(all_curves)):
+        if all_curves[i][0] not in names:
+            names.append(all_curves[i][0])
 
     cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
     if plot_type == 'plot_by_blocks':

@@ -61,4 +61,5 @@ def compute_for_method(all_curves: List[Tuple[float, str]], method: str, params_
     full_method_name = f'{trainer.__str__()} - {method}'
     print(full_method_name)
     name = set_method_name(conf, full_method_name, params_dict)
-    gather_plots_by_trials(all_curves, conf, full_method_name, name, run_params_obj.run_over, run_params_obj.trial_num, trainer)
+    gather_plots_by_trials(all_curves, conf, full_method_name, name, run_params_obj.run_over, run_params_obj.trial_num,
+                           trainer)
