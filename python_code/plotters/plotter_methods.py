@@ -5,7 +5,7 @@ from typing import Tuple, List, Dict, Union
 from dir_definitions import CONFIG_RUNS_DIR
 from python_code.detectors.trainer import Trainer
 from python_code.evaluate import CHANNEL_TYPE_TO_TRAINER_DICT
-from python_code.plotters.plotter_utils import get_ber_plot
+from python_code.plotters.plotter_utils import get_all_plots
 from python_code.utils.config_singleton import Config
 
 RunParams = namedtuple(
@@ -32,28 +32,33 @@ def set_method_name(conf: Config, method_name: str, params_dict: Dict[str, Union
     return name
 
 
-def add_ser(all_curves: List[Tuple[List[float], str]], conf: Config, method_name: str, name: str, run_over: bool,
-            trial_num: int, trainer: Trainer):
+def gather_plots_by_trials(all_curves: List[Tuple[str, List, List, List]], conf: Config, method_name: str,
+                           name: str, run_over: bool,
+                           trial_num: int, trainer: Trainer):
     """
     Run the experiments #trial_num times, averaging over the whole run's aggregated ser.
     """
-    total_ser = []
+    total_ber = []
+    total_correct_values_list = []
+    total_error_values_list = []
     for trial in range(trial_num):
         conf.set_value('seed', 1 + trial)
         trainer.__init__()
-        ber = get_ber_plot(trainer, run_over=run_over,
-                           method_name=method_name + name,
-                           trial=trial)
-        total_ser.append(ber)
-    all_curves.append((total_ser, method_name))
+        ber, correct_values_list, error_values_list = get_all_plots(trainer, run_over=run_over,
+                                                                    method_name=method_name + name,
+                                                                    trial=trial)
+        total_ber.append(ber)
+        total_correct_values_list.extend(correct_values_list)
+        total_error_values_list.extend(error_values_list)
+    all_curves.append((method_name, total_ber, total_correct_values_list, total_error_values_list))
 
 
-def compute_ser_for_method(all_curves: List[Tuple[float, str]], method: str, params_dict: Dict[str, Union[int, str]],
-                           run_params_obj: RunParams):
+def compute_for_method(all_curves: List[Tuple[float, str]], method: str, params_dict: Dict[str, Union[int, str]],
+                       run_params_obj: RunParams):
     conf = Config()
     conf.load_config(os.path.join(CONFIG_RUNS_DIR, params_dict['channel_type'], f'{method}.yaml'))
     trainer = CHANNEL_TYPE_TO_TRAINER_DICT[params_dict['channel_type']][params_dict['detector_type']]()
     full_method_name = f'{trainer.__str__()} - {method}'
     print(full_method_name)
     name = set_method_name(conf, full_method_name, params_dict)
-    add_ser(all_curves, conf, full_method_name, name, run_params_obj.run_over, run_params_obj.trial_num, trainer)
+    gather_plots_by_trials(all_curves, conf, full_method_name, name, run_params_obj.run_over, run_params_obj.trial_num, trainer)

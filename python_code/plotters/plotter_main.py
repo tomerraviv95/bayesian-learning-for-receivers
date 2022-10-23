@@ -1,5 +1,5 @@
 from python_code.plotters.plotter_config import get_config, PlotType
-from python_code.plotters.plotter_methods import compute_ser_for_method, RunParams
+from python_code.plotters.plotter_methods import compute_for_method, RunParams
 from python_code.plotters.plotter_utils import plot_by_values
 
 if __name__ == '__main__':
@@ -17,6 +17,6 @@ if __name__ == '__main__':
         print(method)
         for params_dict in params_dicts:
             print(params_dict)
-            compute_ser_for_method(all_curves, method, params_dict, run_params_obj)
+            compute_for_method(all_curves, method, params_dict, run_params_obj)
 
     plot_by_values(all_curves, values, xlabel, ylabel, plot_type)
