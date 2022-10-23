@@ -57,7 +57,7 @@ def get_color(method_name: str) -> str:
         raise ValueError('No such method!!!')
 
 
-def get_ser_plot(dec: Trainer, run_over: bool, method_name: str, trial=None):
+def get_ber_plot(dec: Trainer, run_over: bool, method_name: str, trial=None):
     print(method_name)
     # set the path to saved plot results for a single method (so we do not need to run anew each time)
     if not os.path.exists(PLOTS_DIR):
@@ -65,19 +65,23 @@ def get_ser_plot(dec: Trainer, run_over: bool, method_name: str, trial=None):
     file_name = '_'.join([method_name, str(conf.channel_type)])
     if trial is not None:
         file_name = file_name + '_' + str(trial)
-    plots_path = os.path.join(PLOTS_DIR, file_name + '.pkl')
+    plots_path = os.path.join(PLOTS_DIR, file_name)
     print(plots_path)
     # if plot already exists, and the run_over flag is false - load the saved plot
-    if os.path.isfile(plots_path) and not run_over:
+    if os.path.isfile(plots_path + '_ber' + '.pkl') and not run_over:
         print("Loading plots")
-        ser_total = load_pkl(plots_path)
+        ber_total = load_pkl(plots_path, type='ber')
+        correct_values_list = load_pkl(plots_path, type='cor')
+        error_values_list = load_pkl(plots_path, type='err')
     else:
         # otherwise - run again
-        print("calculating fresh")
-        ser_total = dec.evaluate()
-        save_pkl(plots_path, ser_total)
-    print(ser_total)
-    return ser_total
+        print("Calculating fresh")
+        ber_total, correct_values_list, error_values_list = dec.evaluate()
+        save_pkl(plots_path, ber_total, type='ber')
+        save_pkl(plots_path, correct_values_list, type='cor')
+        save_pkl(plots_path, error_values_list, type='err')
+    print(ber_total, correct_values_list, error_values_list)
+    return ber_total, correct_values_list, error_values_list
 
 
 def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values: List[float], xlabel: str,
@@ -98,8 +102,8 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
     cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
     if plot_type == 'plot_by_blocks':
         MARKER_EVERY = 10
-        x_ticks = [1].extend(values[MARKER_EVERY-1::MARKER_EVERY])
-        x_labels = [1].extend(values[MARKER_EVERY-1::MARKER_EVERY])
+        x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
+        x_labels = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
     elif plot_type == 'plot_by_snrs':
         MARKER_EVERY = 1
         x_ticks = values

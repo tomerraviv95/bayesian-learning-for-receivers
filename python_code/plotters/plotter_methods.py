@@ -5,7 +5,7 @@ from typing import Tuple, List, Dict, Union
 from dir_definitions import CONFIG_RUNS_DIR
 from python_code.detectors.trainer import Trainer
 from python_code.evaluate import CHANNEL_TYPE_TO_TRAINER_DICT
-from python_code.plotters.plotter_utils import get_ser_plot
+from python_code.plotters.plotter_utils import get_ber_plot
 from python_code.utils.config_singleton import Config
 
 RunParams = namedtuple(
@@ -41,10 +41,10 @@ def add_ser(all_curves: List[Tuple[List[float], str]], conf: Config, method_name
     for trial in range(trial_num):
         conf.set_value('seed', 1 + trial)
         trainer.__init__()
-        ser = get_ser_plot(trainer, run_over=run_over,
+        ber = get_ber_plot(trainer, run_over=run_over,
                            method_name=method_name + name,
                            trial=trial)
-        total_ser.append(ser)
+        total_ser.append(ber)
     all_curves.append((total_ser, method_name))
 
 

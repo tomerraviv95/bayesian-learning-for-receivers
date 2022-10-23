@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -86,7 +86,7 @@ class Trainer(object):
         """
         pass
 
-    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
+    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Every trainer must have some forward pass for its detector
         """
@@ -98,13 +98,14 @@ class Trainer(object):
         """
         pass
 
-    def evaluate(self) -> List[float]:
+    def evaluate(self) -> Tuple[List[float], List[float], List[float]]:
         """
         The online evaluation run. Main function for running the experiments of sequential transmission of pilots and
         data blocks for the paper.
         :return: list of ber per timestep
         """
         total_ber = []
+        correct_values_list, error_values_list = [], []
         # draw words for a given snr
         transmitted_words, received_words, hs = self.channel_dataset.__getitem__(snr_list=[conf.snr])
         # either None or in case of DeepSIC intializes the priors
@@ -121,15 +122,19 @@ class Trainer(object):
                 # re-train the detector
                 self._online_training(tx_pilot, rx_pilot)
             # detect data part after training on the pilot part
-            detected_word = self.forward(rx_data, self.probs_vec)
+            detected_word, confidence_word = self.forward(rx_data, self.probs_vec)
             # calculate accuracy
-            ber = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])
+            ber = calculate_ber(detected_word, tx_data)  # [:, :rx.shape[1]]
+            correct_values = confidence_word[torch.eq(tx_data, detected_word) == 1].values
+            error_values = confidence_word[torch.eq(tx_data, detected_word) == 0].values
             print(f'current: {block_ind, ber}')
             total_ber.append(ber)
+            correct_values_list.extend(correct_values)
+            error_values_list.extend(error_values)
             self.init_priors()
 
         print(f'Final ser: {sum(total_ber) / len(total_ber)}')
-        return total_ber
+        return total_ber, correct_values_list, error_values_list
 
     def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor) -> float:
         # calculate loss
