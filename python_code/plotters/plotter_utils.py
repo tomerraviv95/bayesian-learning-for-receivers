@@ -31,7 +31,7 @@ MARKER_EVERY = 5
 
 
 def get_linestyle(method_name: str) -> str:
-    if 'Ensemble' in method_name:
+    if 'Bayesian' in method_name:
         return 'dotted'
     elif 'ViterbiNet' in method_name or 'DeepSIC' in method_name:
         return 'solid'
@@ -49,7 +49,7 @@ def get_marker(method_name: str) -> str:
 
 
 def get_color(method_name: str) -> str:
-    if 'Ensemble' in method_name:
+    if 'Bayesian' in method_name:
         return 'green'
     elif 'ViterbiNet' in method_name:
         return 'b'

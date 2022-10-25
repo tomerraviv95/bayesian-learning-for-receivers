@@ -7,7 +7,7 @@ if __name__ == '__main__':
     trial_num = 3  # number of trials per point estimate, used to reduce noise by averaging results of multiple runs
     run_params_obj = RunParams(run_over=run_over,
                                trial_num=trial_num)
-    label_name = PlotType.Model_VS_Ensemble_By_SNR_Cost2100
+    label_name = PlotType.Model_VS_Ensemble_By_Block_Synth_Linear
 
     print(label_name.name)
     params_dicts, methods_list, values, xlabel, ylabel, plot_type = get_config(label_name.name)

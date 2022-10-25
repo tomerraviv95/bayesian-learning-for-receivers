@@ -27,7 +27,7 @@ class VNETEnsembleTrainer(Trainer):
         super().__init__()
 
     def __str__(self):
-        return 'ViterbiNet Ensemble'
+        return 'Bayesian ViterbiNet'
 
     def _initialize_detector(self):
         """
