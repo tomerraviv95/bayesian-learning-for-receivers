@@ -2,8 +2,8 @@ import torch
 
 from python_code.channel.channels_hyperparams import MEMORY_LENGTH
 from python_code.channel.modulator import BPSKModulator
+from python_code.detectors.bayesian_vnet.bayesian_vnet_detector import BayesianVNETDetector
 from python_code.detectors.trainer import Trainer
-from python_code.detectors.vnet.vnet_detector import VNETDetector
 from python_code.utils.config_singleton import Config
 from python_code.utils.trellis_utils import calculate_siso_states
 
@@ -11,7 +11,7 @@ conf = Config()
 EPOCHS = 500
 
 
-class VNETTrainer(Trainer):
+class BayesianVNETTrainer(Trainer):
     """
     Trainer for the ViterbiNet model.
     """
@@ -26,13 +26,16 @@ class VNETTrainer(Trainer):
         super().__init__()
 
     def __str__(self):
-        return 'ViterbiNet'
+        return 'Bayesian ViterbiNet'
 
     def _initialize_detector(self):
         """
-        Loads the ViterbiNet detector
+        Loads the Bayesian ViterbiNet detector
         """
-        self.detector = VNETDetector(n_states=self.n_states)
+        self.detector = BayesianVNETDetector(n_states=self.n_states,
+                                             length_scale=0.1,
+                                             num_ensemble_tr=5,
+                                             num_ensemble_val=5)
 
     def calc_loss(self, est, tx: torch.IntTensor) -> torch.Tensor:
         """
@@ -50,11 +53,11 @@ class VNETTrainer(Trainer):
         # now Bayesian loss
         data_fitting_loss_term_ARM_ori = self.criterion(input=est[1], target=gt_states)
         data_fitting_loss_term_ARM_tilde = self.criterion(input=est[2], target=gt_states)
-        ARM_delta = (data_fitting_loss_term_ARM_tilde-data_fitting_loss_term_ARM_ori)
-        grad_logit1 = torch.sum(ARM_delta*(est[4][0]-0.5))
-        grad_logit2 = torch.sum(ARM_delta*(est[4][1]-0.5))
-        arm_loss = grad_logit1*self.detector.net.dropout_logit1 + grad_logit2*self.detector.net.dropout_logit2 # this way, we can simply use backward()
-        kl_term /= TOTAL_BATCH_SIZE # Tomer: can you change this to proper variable please ? 
+        ARM_delta = (data_fitting_loss_term_ARM_tilde - data_fitting_loss_term_ARM_ori)
+        grad_logit1 = torch.sum(ARM_delta * (est[4][0] - 0.5))
+        grad_logit2 = torch.sum(ARM_delta * (est[4][1] - 0.5))
+        arm_loss = grad_logit1 * self.detector.net.dropout_logit1 + grad_logit2 * self.detector.net.dropout_logit2  # this way, we can simply use backward()
+        kl_term = est[3] / tx.shape[0]  # Tomer: can you change this to proper variable please ?
         loss = data_fitting_loss_term + kl_term + arm_loss
         return loss
 
@@ -80,6 +83,6 @@ class VNETTrainer(Trainer):
         for i in range(EPOCHS):
             # pass through detector
             info_for_Bayesian_training = self.detector(rx.float(), phase='train')
-            #soft_estimation = info_for_Bayesian_training[0]
+            # soft_estimation = info_for_Bayesian_training[0]
             current_loss = self.run_train_loop(est=info_for_Bayesian_training, tx=tx)
             loss += current_loss

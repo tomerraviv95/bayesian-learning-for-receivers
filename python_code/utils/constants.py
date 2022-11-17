@@ -24,3 +24,4 @@ class ChannelModels(Enum):
 class DetectorType(Enum):
     black_box = 'black_box'
     model = 'model'
+    bayesian = 'bayesian'
