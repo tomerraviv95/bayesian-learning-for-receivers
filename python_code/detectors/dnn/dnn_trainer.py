@@ -6,6 +6,7 @@ from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.detectors.dnn.dnn_detector import DNNDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 from python_code.utils.trellis_utils import calculate_mimo_states
 
 conf = Config()
@@ -50,7 +51,7 @@ class DNNTrainer(Trainer):
         return loss
 
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
-        detected_word = self.detector(rx.float(), phase='val')
+        detected_word = self.detector(rx.float(), phase=Phase.TEST)
         return detected_word
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
@@ -69,7 +70,7 @@ class DNNTrainer(Trainer):
         for i in range(EPOCHS):
             ind = randint(a=0, b=tx.shape[0] - BATCH_SIZE)
             # pass through detector
-            soft_estimation = self.detector(rx[ind: ind + BATCH_SIZE].float(), phase='train')
+            soft_estimation = self.detector(rx[ind: ind + BATCH_SIZE].float(), phase=Phase.TRAIN)
             current_loss = self.run_train_loop(est=soft_estimation,
                                                tx=tx[ind:ind + BATCH_SIZE])
             loss += current_loss

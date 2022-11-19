@@ -5,6 +5,7 @@ from python_code.channel.modulator import BPSKModulator
 from python_code.detectors.bayesian_vnet.bayesian_vnet_detector import BayesianVNETDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 from python_code.utils.trellis_utils import calculate_siso_states
 
 conf = Config()
@@ -63,7 +64,7 @@ class BayesianVNETTrainer(Trainer):
 
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
-        detected_word = self.detector(rx.float(), phase='val')
+        detected_word = self.detector(rx.float(), phase=Phase.TEST)
         return detected_word
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
@@ -82,7 +83,7 @@ class BayesianVNETTrainer(Trainer):
         loss = 0
         for i in range(EPOCHS):
             # pass through detector
-            info_for_Bayesian_training = self.detector(rx.float(), phase='train')
+            info_for_Bayesian_training = self.detector(rx.float(), phase=Phase.TRAIN)
             # soft_estimation = info_for_Bayesian_training[0]
             current_loss = self.run_train_loop(est=info_for_Bayesian_training, tx=tx)
             loss += current_loss

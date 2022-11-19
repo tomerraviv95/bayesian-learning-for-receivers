@@ -4,6 +4,7 @@ import torch.nn as nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import MEMORY_LENGTH
 from python_code.channel.modulator import BPSKModulator
+from python_code.utils.constants import Phase
 from python_code.utils.trellis_utils import calculate_symbols_from_states
 
 INPUT_SIZE = 1
@@ -26,9 +27,9 @@ class RNNDetector(nn.Module):
         """
         The forward pass of the RNN detector
         :param rx: input values, size [batch_size,transmission_length]
-        :param phase: 'train' or 'val'
-        :return: if in 'train' - the estimated bitwise prob [batch_size,transmission_length,N_CLASSES]
-        if in 'val' - the detected words [n_batch,transmission_length]
+        :param phase: Phase.TRAIN or Phase.TEST
+        :return: if in Phase.TRAIN - the estimated bitwise prob [batch_size,transmission_length,N_CLASSES]
+        if in Phase.TEST - the detected words [n_batch,transmission_length]
         """
         # Set initial states
         h_n = torch.zeros(NUM_LAYERS, 1, HIDDEN_SIZE).to(DEVICE)
@@ -39,7 +40,7 @@ class RNNDetector(nn.Module):
 
         # Linear layer output
         out = self.linear(rnn_out.squeeze(1))
-        if phase == 'val':
+        if phase == Phase.TEST:
             # Decode the output
             estimated_states = torch.argmax(out, dim=1)
             estimated_words = calculate_symbols_from_states(self.output_size, estimated_states)

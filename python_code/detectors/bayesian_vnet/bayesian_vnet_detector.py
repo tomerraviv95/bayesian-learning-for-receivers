@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 
 from python_code import DEVICE
+from python_code.utils.constants import Phase
 
 HIDDEN1_SIZE = 75
 HIDDEN2_SIZE = 16
@@ -48,7 +49,7 @@ class BayesianDNN(nn.Module):
         self.length_scale = length_scale
 
     def forward(self, raw_input, num_ensemble, phase):
-        if phase == 'train':
+        if phase == Phase.TRAIN:
             log_prob = 0
             log_prob_ARM_ori = 0
             log_prob_ARM_tilde = 0
@@ -57,9 +58,9 @@ class BayesianDNN(nn.Module):
         for ind_ensemble in range(num_ensemble):
             # first layer
             u1 = torch.rand(raw_input.shape).to(DEVICE)
-            x, z1 = self.dropout_ori(raw_input, self.dropout_logit1, u1)
+            x = self.dropout_ori(raw_input, self.dropout_logit1, u1)
             x = self.activ(self.fc1(x))
-            if phase == 'train':
+            if phase == Phase.TRAIN:
                 x_tilde = self.dropout_tilde(raw_input, self.dropout_logit1, u1)
                 x_tilde = self.activ(self.fc1(x_tilde))
             else:
@@ -67,23 +68,23 @@ class BayesianDNN(nn.Module):
 
             # second layer
             u2 = torch.rand(x.shape).to(DEVICE)
-            x, z2 = self.dropout_ori(x, self.dropout_logit2, u2)
+            x = self.dropout_ori(x, self.dropout_logit2, u2)
             x = self.fc2(x)
-            if phase == 'train':
+            if phase == Phase.TRAIN:
                 x_tilde = self.dropout_tilde(x_tilde, self.dropout_logit2, u2)
                 x_tilde = self.fc2(x_tilde)
             else:
                 pass
 
-            if phase == 'train':
+            if phase == Phase.TRAIN:
                 log_prob_ARM_ori += self.logsoftmax(x)  # .detach()
                 log_prob_ARM_tilde += self.logsoftmax(x_tilde)  # .detach()
-                log_prob += self.logsoftmax(x)  # training loss computed for each parameter realization
+                log_prob += self.softmax(x)  # training loss computed for each parameter realization
             else:
                 prob += self.softmax(x)  # ensembling should be done in probability domain
 
         ## KL term if training
-        if phase == 'train':
+        if phase == Phase.TRAIN:
             # KL term
             # first layer
             first_layer_kl = self.sigmoid(self.dropout_logit1) * (self.length_scale ** 2) * (
@@ -107,7 +108,7 @@ class BayesianDNN(nn.Module):
     def dropout_ori(x, logit, u):
         dropout_prob = torch.sigmoid(logit)
         z = (u < dropout_prob).float()
-        return x * z, z
+        return x * z
 
     @staticmethod
     def dropout_tilde(x, logit, u):
@@ -137,15 +138,15 @@ class BayesianVNETDetector(nn.Module):
         """
         The forward pass of the ViterbiNet algorithm
         :param rx: input values, size [batch_size,transmission_length]
-        :param phase: 'train' or 'val'
-        :returns if in 'train' - the estimated priors [batch_size,transmission_length,n_states]
-        if in 'val' - the detected words [n_batch,transmission_length]
+        :param phase: Phase.TRAIN or Phase.TEST
+        :returns if in Phase.TRAIN - the estimated priors [batch_size,transmission_length,n_states]
+        if in Phase.TEST - the detected words [n_batch,transmission_length]
         """
         # initialize input probabilities
         in_prob = torch.zeros([1, self.n_states]).to(DEVICE)
         # priors = self.net(rx, num_ensemble, phase)
 
-        if phase == 'val':
+        if phase == Phase.TEST:
             priors, _, _, _, _ = self.net(rx, self.num_ensemble_val, phase)
             detected_word = torch.zeros(rx.shape).to(DEVICE)
             confidence_word = torch.zeros(rx.shape).to(DEVICE)

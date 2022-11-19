@@ -6,6 +6,7 @@ from python_code.channel.channels_hyperparams import MEMORY_LENGTH
 from python_code.detectors.rnn.rnn_detector import RNNDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 from python_code.utils.trellis_utils import calculate_siso_states
 
 conf = Config()
@@ -48,7 +49,7 @@ class RNNTrainer(Trainer):
 
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
-        detected_word = self.detector(rx.float(), phase='val')
+        detected_word = self.detector(rx.float(), phase=Phase.TEST)
         return detected_word
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
@@ -67,6 +68,6 @@ class RNNTrainer(Trainer):
         for i in range(EPOCHS):
             ind = randint(a=0, b=conf.pilot_size - BATCH_SIZE)
             # pass through detector
-            soft_estimation = self.detector(rx[ind: ind + BATCH_SIZE].float(), phase='train')
+            soft_estimation = self.detector(rx[ind: ind + BATCH_SIZE].float(), phase=Phase.TRAIN)
             current_loss = self.run_train_loop(est=soft_estimation, tx=tx[ind:ind + BATCH_SIZE])
             loss += current_loss

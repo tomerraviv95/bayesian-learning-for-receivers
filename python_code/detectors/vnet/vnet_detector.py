@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 
 from python_code import DEVICE
+from python_code.utils.constants import Phase
 
 HIDDEN1_SIZE = 75
 HIDDEN2_SIZE = 16
@@ -57,15 +58,15 @@ class VNETDetector(nn.Module):
         """
         The forward pass of the ViterbiNet algorithm
         :param rx: input values, size [batch_size,transmission_length]
-        :param phase: 'train' or 'val'
-        :returns if in 'train' - the estimated priors [batch_size,transmission_length,n_states]
-        if in 'val' - the detected words [n_batch,transmission_length]
+        :param phase: Phase.TRAIN or Phase.TEST
+        :returns if in Phase.TRAIN - the estimated priors [batch_size,transmission_length,n_states]
+        if in Phase.TEST - the detected words [n_batch,transmission_length]
         """
         # initialize input probabilities
         in_prob = torch.zeros([1, self.n_states]).to(DEVICE)
         priors = self.net(rx)
 
-        if phase == 'val':
+        if phase == Phase.TEST:
             detected_word = torch.zeros(rx.shape).to(DEVICE)
             confidence_word = torch.zeros(rx.shape).to(DEVICE)
             for i in range(rx.shape[0]):
