@@ -6,7 +6,6 @@ from python_code import DEVICE
 from python_code.utils.constants import Phase
 
 HIDDEN1_SIZE = 75
-HIDDEN2_SIZE = 16
 
 
 def create_transition_table(n_states: int) -> np.ndarray:

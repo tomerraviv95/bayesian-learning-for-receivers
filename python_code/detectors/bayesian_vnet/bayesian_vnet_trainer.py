@@ -24,6 +24,7 @@ class BayesianVNETTrainer(Trainer):
         self.n_ant = 1
         self.lr = 1e-3
         self.probs_vec = None
+        self.ensemble_num = 5
         super().__init__()
 
     def __str__(self):
@@ -35,8 +36,7 @@ class BayesianVNETTrainer(Trainer):
         """
         self.detector = BayesianVNETDetector(n_states=self.n_states,
                                              length_scale=0.1,
-                                             num_ensemble_tr=5,
-                                             num_ensemble_val=5)
+                                             ensemble_num=self.ensemble_num)
 
     def calc_loss(self, est, tx: torch.IntTensor) -> torch.Tensor:
         """
@@ -51,15 +51,21 @@ class BayesianVNETTrainer(Trainer):
         """
         gt_states = calculate_siso_states(self.memory_length, tx)
         data_fitting_loss_term = self.criterion(input=est[0], target=gt_states)
-        # now Bayesian loss
-        data_fitting_loss_term_ARM_ori = self.criterion(input=est[1], target=gt_states)
-        data_fitting_loss_term_ARM_tilde = self.criterion(input=est[2], target=gt_states)
-        ARM_delta = (data_fitting_loss_term_ARM_tilde / data_fitting_loss_term_ARM_ori)
-        grad_logit1 = torch.mean(ARM_delta * (est[4][0] - 0.5))
-        grad_logit2 = torch.mean(ARM_delta * (est[4][1] - 0.5))
-        arm_loss = grad_logit1 * self.detector.net.dropout_logit1 + grad_logit2 * self.detector.net.dropout_logit2  # this way, we can simply use backward()
-        kl_term = est[3] / tx.shape[0]  # Tomer: can you change this to proper variable please ?
-        loss = data_fitting_loss_term + kl_term + arm_loss
+
+        # ARM Loss
+        arm_loss = 0
+        for i in range(self.ensemble_num):
+            data_fitting_loss_term_ARM_ori = self.criterion(input=est[1][i], target=gt_states)
+            data_fitting_loss_term_ARM_tilde = self.criterion(input=est[2][i], target=gt_states)
+            ARM_delta = (data_fitting_loss_term_ARM_tilde - data_fitting_loss_term_ARM_ori)
+            grad_logit1 = ARM_delta * (est[3][0][i] - 0.5)
+            grad_logit2 = ARM_delta * (est[3][1][i] - 0.5)
+            arm_loss += torch.matmul(grad_logit1, self.detector.net.dropout_logit1.T) + torch.matmul(grad_logit2,
+                                                                                                     self.detector.net.dropout_logit2.T)
+        arm_loss = torch.mean(arm_loss)
+        # KL Loss
+        # kl_term = est[4] / tx.shape[0]  # Tomer: can you change this to proper variable please ?
+        loss = data_fitting_loss_term + arm_loss  # + kl_term
         return loss
 
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
@@ -84,6 +90,5 @@ class BayesianVNETTrainer(Trainer):
         for i in range(EPOCHS):
             # pass through detector
             info_for_Bayesian_training = self.detector(rx.float(), phase=Phase.TRAIN)
-            # soft_estimation = info_for_Bayesian_training[0]
             current_loss = self.run_train_loop(est=info_for_Bayesian_training, tx=tx)
             loss += current_loss

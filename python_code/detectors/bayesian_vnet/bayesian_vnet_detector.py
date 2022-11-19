@@ -6,7 +6,6 @@ from python_code import DEVICE
 from python_code.utils.constants import Phase
 
 HIDDEN1_SIZE = 75
-HIDDEN2_SIZE = 16
 
 
 def create_transition_table(n_states: int) -> np.ndarray:
@@ -38,26 +37,31 @@ def acs_block(in_prob: torch.Tensor, llrs: torch.Tensor, transition_table: torch
 class BayesianDNN(nn.Module):
     def __init__(self, n_states, length_scale=0.1):
         super(BayesianDNN, self).__init__()
-        self.fc1 = nn.Linear(1, HIDDEN1_SIZE)
-        self.fc2 = nn.Linear(HIDDEN1_SIZE, n_states)
-        self.dropout_logit1 = nn.parameter.Parameter(torch.tensor(2.0))
-        self.dropout_logit2 = nn.parameter.Parameter(torch.tensor(2.0))
-        self.activ = nn.ReLU()
-        self.logsoftmax = nn.LogSoftmax(dim=1)
+        self.fc1 = nn.Linear(1, HIDDEN1_SIZE).to(DEVICE)
+        self.fc2 = nn.Linear(HIDDEN1_SIZE, n_states).to(DEVICE)
+        # self.dropout_logit1 = nn.parameter.Parameter(torch.tensor(1002.0))
+        self.dropout_logit1 = nn.Parameter(torch.ones(1).reshape(1, -1)).to(DEVICE)
+        # self.dropout_logit2 = nn.parameter.Parameter(torch.tensor(1002.0))
+        self.dropout_logit2 = nn.Parameter(torch.ones(HIDDEN1_SIZE).reshape(1, -1)).to(DEVICE)
+        self.activ = nn.ReLU().to(DEVICE)
+        # self.logsoftmax = nn.LogSoftmax(dim=1)
         self.sigmoid = nn.Sigmoid()
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
         self.length_scale = length_scale
 
     def forward(self, raw_input, num_ensemble, phase):
+        prob = 0
         if phase == Phase.TRAIN:
-            log_prob = 0
-            log_prob_ARM_ori = 0
-            log_prob_ARM_tilde = 0
-        else:
-            prob = 0
+            ARM_ori = []
+            ARM_tilde = []
+            u1_list = []
+            u2_list = []
+            print(self.dropout_logit1, self.dropout_logit2)
+
         for ind_ensemble in range(num_ensemble):
             # first layer
             u1 = torch.rand(raw_input.shape).to(DEVICE)
+            u1_list.append(u1)
             x = self.dropout_ori(raw_input, self.dropout_logit1, u1)
             x = self.activ(self.fc1(x))
             if phase == Phase.TRAIN:
@@ -68,6 +72,7 @@ class BayesianDNN(nn.Module):
 
             # second layer
             u2 = torch.rand(x.shape).to(DEVICE)
+            u2_list.append(u2)
             x = self.dropout_ori(x, self.dropout_logit2, u2)
             x = self.fc2(x)
             if phase == Phase.TRAIN:
@@ -77,11 +82,11 @@ class BayesianDNN(nn.Module):
                 pass
 
             if phase == Phase.TRAIN:
-                log_prob_ARM_ori += self.logsoftmax(x)  # .detach()
-                log_prob_ARM_tilde += self.logsoftmax(x_tilde)  # .detach()
-                log_prob += self.softmax(x)  # training loss computed for each parameter realization
+                ARM_ori.append(x)
+                ARM_tilde.append(x_tilde)
+                prob += x  # training loss computed for each parameter realization
             else:
-                prob += self.softmax(x)  # ensembling should be done in probability domain
+                prob += x  # ensembling should be done in probability domain
 
         ## KL term if training
         if phase == Phase.TRAIN:
@@ -96,10 +101,9 @@ class BayesianDNN(nn.Module):
             H1 = self.entropy(self.sigmoid(self.dropout_logit1))
             H2 = self.entropy(self.sigmoid(self.dropout_logit2))
             kl_term = first_layer_kl + second_layer_kl - H1 - H2
-            return log_prob / num_ensemble, log_prob_ARM_ori / num_ensemble, log_prob_ARM_tilde / num_ensemble, kl_term, (
-                u1, u2)
+            return prob / num_ensemble, ARM_ori, ARM_tilde, (u1_list, u2_list), kl_term,
         else:
-            return torch.log(prob / num_ensemble), None, None, None, None
+            return prob / num_ensemble, None, None, None, None
 
     def entropy(self, prob):
         return -prob * torch.log2(prob) - (1 - prob) * torch.log2(1 - prob)
@@ -122,16 +126,15 @@ class BayesianVNETDetector(nn.Module):
     This implements the Bayesian version of VA decoder by a parameterization of the cost calculation by an NN for each stage
     """
 
-    def __init__(self, n_states: int, length_scale: float, num_ensemble_tr: int,
-                 num_ensemble_val: int):  # length_scale: how much we care the Bayesian prior
+    def __init__(self, n_states: int, length_scale: float,
+                 ensemble_num: int):  # length_scale: how much we care the Bayesian prior
 
         super(BayesianVNETDetector, self).__init__()
         self.n_states = n_states
         self.transition_table_array = create_transition_table(n_states)
         self.transition_table = torch.Tensor(self.transition_table_array).to(DEVICE)
         self.length_scale = length_scale
-        self.num_ensemble_tr = num_ensemble_tr
-        self.num_ensemble_val = num_ensemble_val
+        self.ensemble_num = ensemble_num
         self.net = BayesianDNN(self.n_states, self.length_scale).to(DEVICE)
 
     def forward(self, rx: torch.Tensor, phase: str) -> torch.Tensor:
@@ -147,7 +150,7 @@ class BayesianVNETDetector(nn.Module):
         # priors = self.net(rx, num_ensemble, phase)
 
         if phase == Phase.TEST:
-            priors, _, _, _, _ = self.net(rx, self.num_ensemble_val, phase)
+            priors, _, _, _, _ = self.net(rx, self.ensemble_num, phase)
             detected_word = torch.zeros(rx.shape).to(DEVICE)
             confidence_word = torch.zeros(rx.shape).to(DEVICE)
             for i in range(rx.shape[0]):
@@ -161,5 +164,5 @@ class BayesianVNETDetector(nn.Module):
 
             return detected_word, confidence_word
         else:
-            info_for_Bayesian_training = self.net(rx, self.num_ensemble_tr, phase)
+            info_for_Bayesian_training = self.net(rx, self.ensemble_num, phase)
             return info_for_Bayesian_training
