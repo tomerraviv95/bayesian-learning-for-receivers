@@ -22,7 +22,7 @@ class BayesianVNETTrainer(Trainer):
         self.n_states = BPSKModulator.constellation_size ** self.memory_length
         self.n_user = 1
         self.n_ant = 1
-        self.lr = 1e-3
+        self.lr = 5e-3
         self.probs_vec = None
         self.ensemble_num = 5
         super().__init__()
@@ -35,7 +35,7 @@ class BayesianVNETTrainer(Trainer):
         Loads the Bayesian ViterbiNet detector
         """
         self.detector = BayesianVNETDetector(n_states=self.n_states,
-                                             length_scale=0.1,
+                                             length_scale=0.3,
                                              ensemble_num=self.ensemble_num)
 
     def calc_loss(self, est, tx: torch.IntTensor) -> torch.Tensor:
@@ -64,8 +64,8 @@ class BayesianVNETTrainer(Trainer):
                                                                                                      self.detector.net.dropout_logit2.T)
         arm_loss = torch.mean(arm_loss)
         # KL Loss
-        # kl_term = est[4] / tx.shape[0]  # Tomer: can you change this to proper variable please ?
-        loss = data_fitting_loss_term + arm_loss  # + kl_term
+        kl_term = est[4] / tx.shape[0]  # Tomer: can you change this to proper variable please ?
+        loss = data_fitting_loss_term + arm_loss + kl_term
         return loss
 
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
