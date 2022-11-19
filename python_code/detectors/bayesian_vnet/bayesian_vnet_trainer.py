@@ -35,7 +35,7 @@ class BayesianVNETTrainer(Trainer):
         Loads the Bayesian ViterbiNet detector
         """
         self.detector = BayesianVNETDetector(n_states=self.n_states,
-                                             length_scale=0.3,
+                                             length_scale=0.1,
                                              ensemble_num=self.ensemble_num)
 
     def calc_loss(self, est, tx: torch.IntTensor) -> torch.Tensor:

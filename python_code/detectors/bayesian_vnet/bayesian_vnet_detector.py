@@ -35,12 +35,12 @@ def acs_block(in_prob: torch.Tensor, llrs: torch.Tensor, transition_table: torch
 
 
 class BayesianDNN(nn.Module):
-    def __init__(self, n_states, length_scale=0.1):
+    def __init__(self, n_states, length_scale):
         super(BayesianDNN, self).__init__()
         self.fc1 = nn.Linear(1, HIDDEN1_SIZE).to(DEVICE)
         self.fc2 = nn.Linear(HIDDEN1_SIZE, n_states).to(DEVICE)
-        self.dropout_logit1 = nn.Parameter(torch.rand(1).reshape(1, -1))
-        self.dropout_logit2 = nn.Parameter(torch.rand(HIDDEN1_SIZE).reshape(1, -1))
+        self.dropout_logit1 = nn.Parameter(torch.rand(HIDDEN1_SIZE).reshape(1, -1))
+        self.dropout_logit2 = nn.Parameter(torch.rand(n_states).reshape(1, -1))
         self.activ = nn.ReLU().to(DEVICE)
         self.sigmoid = nn.Sigmoid()
         self.length_scale = length_scale
@@ -55,23 +55,23 @@ class BayesianDNN(nn.Module):
 
         for ind_ensemble in range(num_ensemble):
             # first layer
-            u1 = torch.rand(raw_input.shape).to(DEVICE)
-            x = self.dropout_ori(raw_input, self.dropout_logit1, u1)
-            x = self.activ(self.fc1(x))
+            x = self.activ(self.fc1(raw_input))
+            u1 = torch.rand(x.shape).to(DEVICE)
+            x = self.dropout_ori(x, self.dropout_logit1, u1)
             if phase == Phase.TRAIN:
-                x_tilde = self.dropout_tilde(raw_input, self.dropout_logit1, u1)
-                x_tilde = self.activ(self.fc1(x_tilde))
+                x_tilde = self.activ(self.fc1(raw_input))
+                x_tilde = self.dropout_tilde(x_tilde, self.dropout_logit1, u1)
                 u1_list.append(u1)
             else:
                 pass
 
             # second layer
+            x = self.fc2(x)
             u2 = torch.rand(x.shape).to(DEVICE)
             x = self.dropout_ori(x, self.dropout_logit2, u2)
-            x = self.fc2(x)
             if phase == Phase.TRAIN:
-                x_tilde = self.dropout_tilde(x_tilde, self.dropout_logit2, u2)
                 x_tilde = self.fc2(x_tilde)
+                x_tilde = self.dropout_tilde(x_tilde, self.dropout_logit2, u2)
                 u2_list.append(u2)
             else:
                 pass
@@ -86,11 +86,11 @@ class BayesianDNN(nn.Module):
             # KL term
             scaling = (self.length_scale ** 2 / 2)
             # first layer
-            first_layer_kl = scaling * self.dropout_logit1.reshape(-1) * torch.norm(self.fc1.weight, dim=0) ** 2
+            first_layer_kl = scaling * self.dropout_logit1.reshape(-1) * torch.norm(self.fc1.weight, dim=1) ** 2
             H1 = self.entropy(self.dropout_logit1.reshape(-1))
             diff1 = first_layer_kl - H1
             # second layer
-            second_layer_kl = scaling * self.dropout_logit2.reshape(-1) * torch.norm(self.fc2.weight, dim=0) ** 2
+            second_layer_kl = scaling * self.dropout_logit2.reshape(-1) * torch.norm(self.fc2.weight, dim=1) ** 2
             H2 = self.entropy(self.dropout_logit2.reshape(-1))
             diff2 = second_layer_kl - H2
             # total kl
@@ -139,7 +139,6 @@ class BayesianVNETDetector(nn.Module):
         """
         # initialize input probabilities
         in_prob = torch.zeros([1, self.n_states]).to(DEVICE)
-        # priors = self.net(rx, num_ensemble, phase)
 
         if phase == Phase.TEST:
             priors, _, _, _, _ = self.net(rx, self.ensemble_num, phase)
