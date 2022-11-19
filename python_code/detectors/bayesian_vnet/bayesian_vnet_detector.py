@@ -42,10 +42,10 @@ class BayesianDNN(nn.Module):
         self.dropout_logit1 = nn.parameter.Parameter(torch.tensor(2.0))
         self.dropout_logit2 = nn.parameter.Parameter(torch.tensor(2.0))
         self.activ = nn.ReLU()
-        self.logsoftmax = nn.LogSoftmax()
+        self.logsoftmax = nn.LogSoftmax(dim=1)
         self.sigmoid = nn.Sigmoid()
-        self.softmax = nn.Softmax()
-        self.l = length_scale
+        self.softmax = nn.Softmax(dim=1)
+        self.length_scale = length_scale
 
     def forward(self, raw_input, num_ensemble, phase):
         if phase == 'train':
@@ -76,9 +76,9 @@ class BayesianDNN(nn.Module):
                 pass
 
             if phase == 'train':
-                log_prob_ARM_ori += self.logsoftmax(x).detach()
-                log_prob_ARM_tilde += self.logsoftmax(x_tilde).detach()
-                log_prob += self.logsoftmax(x)  # training loss computed for each parameeter realization
+                log_prob_ARM_ori += self.logsoftmax(x)  # .detach()
+                log_prob_ARM_tilde += self.logsoftmax(x_tilde)  # .detach()
+                log_prob += self.logsoftmax(x)  # training loss computed for each parameter realization
             else:
                 prob += self.softmax(x)  # ensembling should be done in probability domain
 
@@ -86,14 +86,11 @@ class BayesianDNN(nn.Module):
         if phase == 'train':
             # KL term
             # first layer
-            first_layer_kl = 0
-            first_layer_kl += self.sigmoid(self.dropout_logit1) * (self.l ** 2) * (torch.norm(self.fc1.weight) ** 2) / 2
-            first_layer_kl += (self.l ** 2) * (torch.norm(self.fc1.bias) ** 2) / 2
+            first_layer_kl = self.sigmoid(self.dropout_logit1) * (self.length_scale ** 2) * (
+                    torch.norm(self.fc1.weight) ** 2 + torch.norm(self.fc1.bias) ** 2) / 2
             # second layer
-            second_layer_kl = 0
-            second_layer_kl += self.sigmoid(self.dropout_logit2) * (self.l ** 2) * (
-                    torch.norm(self.fc2.weight) ** 2) / 2
-            second_layer_kl += (self.l ** 2) * (torch.norm(self.fc2.bias) ** 2) / 2
+            second_layer_kl = self.sigmoid(self.dropout_logit2) * (self.length_scale ** 2) * (
+                    torch.norm(self.fc2.weight) ** 2 + torch.norm(self.fc2.bias) ** 2) / 2
 
             H1 = self.entropy(self.sigmoid(self.dropout_logit1))
             H2 = self.entropy(self.sigmoid(self.dropout_logit2))
@@ -108,13 +105,13 @@ class BayesianDNN(nn.Module):
 
     @staticmethod
     def dropout_ori(x, logit, u):
-        dropout_prob = torch.nn.functional.sigmoid(logit)
+        dropout_prob = torch.sigmoid(logit)
         z = (u < dropout_prob).float()
         return x * z, z
 
     @staticmethod
     def dropout_tilde(x, logit, u):
-        dropout_prob_tilde = torch.nn.functional.sigmoid(-logit)
+        dropout_prob_tilde = torch.sigmoid(-logit)
         z_tilde = (u > dropout_prob_tilde).float()
         return x * z_tilde
 

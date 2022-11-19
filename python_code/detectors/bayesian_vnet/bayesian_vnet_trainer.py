@@ -53,9 +53,9 @@ class BayesianVNETTrainer(Trainer):
         # now Bayesian loss
         data_fitting_loss_term_ARM_ori = self.criterion(input=est[1], target=gt_states)
         data_fitting_loss_term_ARM_tilde = self.criterion(input=est[2], target=gt_states)
-        ARM_delta = (data_fitting_loss_term_ARM_tilde - data_fitting_loss_term_ARM_ori)
-        grad_logit1 = torch.sum(ARM_delta * (est[4][0] - 0.5))
-        grad_logit2 = torch.sum(ARM_delta * (est[4][1] - 0.5))
+        ARM_delta = (data_fitting_loss_term_ARM_tilde / data_fitting_loss_term_ARM_ori)
+        grad_logit1 = torch.mean(ARM_delta * (est[4][0] - 0.5))
+        grad_logit2 = torch.mean(ARM_delta * (est[4][1] - 0.5))
         arm_loss = grad_logit1 * self.detector.net.dropout_logit1 + grad_logit2 * self.detector.net.dropout_logit2  # this way, we can simply use backward()
         kl_term = est[3] / tx.shape[0]  # Tomer: can you change this to proper variable please ?
         loss = data_fitting_loss_term + kl_term + arm_loss
