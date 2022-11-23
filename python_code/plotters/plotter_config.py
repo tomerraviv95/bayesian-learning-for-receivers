@@ -16,6 +16,16 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
     # figure 1
     if plot_type == PlotType.BY_SNR:
         params_dicts = [
+            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'fading_in_channel': True, 'from_scratch': False},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'fading_in_channel': True, 'from_scratch': False},
+            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'fading_in_channel': True, 'from_scratch': False},
+            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'fading_in_channel': True, 'from_scratch': False},
+            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'fading_in_channel': True, 'from_scratch': False},
             {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
              'fading_in_channel': True, 'from_scratch': False},
             {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
