@@ -42,10 +42,11 @@ class BayesianDNN(nn.Module):
         self.dropout_logit = nn.Parameter(torch.rand(HIDDEN1_SIZE).reshape(1, -1))
         self.activ = nn.ReLU().to(DEVICE)
         self.sigmoid = nn.Sigmoid()
+        self.log_softmax = nn.LogSoftmax(dim=1)
         self.length_scale = length_scale
 
     def forward(self, raw_input, num_ensemble, phase):
-        prob = 0
+        log_probs = 0
         if phase == Phase.TRAIN:
             ARM_ori = []
             ARM_tilde = []
@@ -55,22 +56,24 @@ class BayesianDNN(nn.Module):
 
             # first layer
             x = self.activ(self.fc1(raw_input))
-            u1 = torch.rand(x.shape).to(DEVICE)
-            x = self.dropout_ori(x, self.dropout_logit, u1)
+            u = torch.rand(x.shape).to(DEVICE)
+            x = self.dropout_ori(x, self.dropout_logit, u)
             if phase == Phase.TRAIN:
                 x_tilde = self.activ(self.fc1(raw_input))
-                x_tilde = self.dropout_tilde(x_tilde, self.dropout_logit, u1)
-                u_list.append(u1)
+                x_tilde = self.dropout_tilde(x_tilde, self.dropout_logit, u)
             else:
                 pass
 
             # second layer
-            x = self.fc2(x)
-            prob += x
+            out = self.fc2(x)
+            log_probs += self.log_softmax(out)
             if phase == Phase.TRAIN:
-                ARM_ori.append(x)
-                ARM_tilde.append(x_tilde)
+                u_list.append(u)
+                ARM_ori.append(self.log_softmax(out))
+                out_tilde = self.fc2(x_tilde)
+                ARM_tilde.append(self.log_softmax(out_tilde))
 
+        log_probs /= num_ensemble
         ## KL term if training
         if phase == Phase.TRAIN:
             # KL term
@@ -78,9 +81,9 @@ class BayesianDNN(nn.Module):
             first_layer_kl = scaling1 * torch.norm(self.fc1.weight, dim=1) ** 2
             H1 = self.entropy(torch.sigmoid(self.dropout_logit).reshape(-1))
             kl_term = torch.sum(first_layer_kl - H1)
-            return prob / num_ensemble, ARM_ori, ARM_tilde, u_list, kl_term
+            return log_probs, ARM_ori, ARM_tilde, u_list, kl_term
         else:
-            return prob / num_ensemble, None, None, None, None
+            return log_probs, None, None, None, None
 
     def entropy(self, prob):
         return -prob * torch.log(prob) - (1 - prob) * torch.log(1 - prob)

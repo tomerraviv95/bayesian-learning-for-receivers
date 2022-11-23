@@ -63,7 +63,8 @@ class VNETDetector(nn.Module):
         """
         # initialize input probabilities
         in_prob = torch.zeros([1, self.n_states]).to(DEVICE)
-        priors = self.net(rx)
+        func = torch.nn.LogSoftmax(dim=1)
+        priors = func(self.net(rx))
 
         if phase == Phase.TEST:
             detected_word = torch.zeros(rx.shape).to(DEVICE)
