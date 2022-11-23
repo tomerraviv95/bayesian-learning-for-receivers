@@ -32,7 +32,7 @@ class DNNDetector(nn.Module):
                   nn.Linear(HIDDEN_SIZE, self.n_states)]
         self.net = nn.Sequential(*layers).to(DEVICE)
 
-    def forward(self, rx: torch.Tensor, phase: str) -> torch.Tensor:
+    def forward(self, rx: torch.Tensor, phase: Phase) -> torch.Tensor:
         out = self.net(rx)
         if phase == Phase.TEST:
             # Decode the output

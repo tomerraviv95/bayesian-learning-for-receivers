@@ -23,7 +23,7 @@ class RNNDetector(nn.Module):
         self.lstm = nn.LSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS).to(DEVICE)
         self.linear = nn.Linear(HIDDEN_SIZE, self.output_size).to(DEVICE)
 
-    def forward(self, rx: torch.Tensor, phase: str) -> torch.Tensor:
+    def forward(self, rx: torch.Tensor, phase: Phase) -> torch.Tensor:
         """
         The forward pass of the RNN detector
         :param rx: input values, size [batch_size,transmission_length]
