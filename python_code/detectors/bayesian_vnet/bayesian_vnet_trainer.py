@@ -2,10 +2,10 @@ import torch
 
 from python_code.channel.channels_hyperparams import MEMORY_LENGTH
 from python_code.channel.modulator import BPSKModulator
-from python_code.detectors.bayesian_vnet.bayesian_vnet_detector import BayesianVNETDetector
+from python_code.detectors.bayesian_vnet.bayesian_vnet_detector import BayesianVNETDetector, LossVariable
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, HALF
 from python_code.utils.trellis_utils import calculate_siso_states
 
 conf = Config()
@@ -39,7 +39,7 @@ class BayesianVNETTrainer(Trainer):
                                              length_scale=0.1,
                                              ensemble_num=self.ensemble_num)
 
-    def calc_loss(self, est, tx: torch.IntTensor) -> torch.Tensor:
+    def calc_loss(self, est: LossVariable, tx: torch.IntTensor) -> torch.Tensor:
         """
         Cross Entropy loss - distribution over states versus the gt state label
         :param est[0]: [1,transmission_length,n_states], each element is a probability
@@ -51,19 +51,18 @@ class BayesianVNETTrainer(Trainer):
         :return: loss value
         """
         gt_states = calculate_siso_states(self.memory_length, tx)
-        data_fitting_loss_term = self.criterion(input=est[0], target=gt_states)
-
+        data_fitting_loss_term = self.criterion(input=est.priors, target=gt_states)
         # ARM Loss
         arm_loss = 0
         for i in range(self.ensemble_num):
-            data_fitting_loss_term_ARM_ori = self.criterion(input=est[1][i], target=gt_states)
-            data_fitting_loss_term_ARM_tilde = self.criterion(input=est[2][i], target=gt_states)
-            ARM_delta = (data_fitting_loss_term_ARM_tilde - data_fitting_loss_term_ARM_ori)
-            grad_logit = ARM_delta * (est[3][i] - 0.5)
+            loss_term_arm_original = self.criterion(input=est.arm_original[i], target=gt_states)
+            loss_term_arm_tilde = self.criterion(input=est.arm_tilde[i], target=gt_states)
+            arm_delta = (loss_term_arm_tilde - loss_term_arm_original)
+            grad_logit = arm_delta * (est.u_list[i] - HALF)
             arm_loss += torch.matmul(grad_logit, self.detector.net.dropout_logit.T)
         arm_loss = torch.mean(arm_loss)
         # KL Loss
-        kl_term = self.kl_beta * est[4] / tx.shape[0]
+        kl_term = self.kl_beta * est.kl_term / tx.shape[0]
         loss = data_fitting_loss_term + arm_loss + kl_term
         return loss
 
@@ -88,6 +87,6 @@ class BayesianVNETTrainer(Trainer):
         loss = 0
         for i in range(EPOCHS):
             # pass through detector
-            info_for_Bayesian_training = self.detector(rx.float(), phase=Phase.TRAIN)
-            current_loss = self.run_train_loop(est=info_for_Bayesian_training, tx=tx)
+            soft_estimation = self.detector(rx.float(), phase=Phase.TRAIN)
+            current_loss = self.run_train_loop(est=soft_estimation, tx=tx)
             loss += current_loss

@@ -1,9 +1,13 @@
+import collections
+
 import numpy as np
 import torch
 import torch.nn as nn
 
 from python_code import DEVICE
 from python_code.utils.constants import Phase
+
+LossVariable = collections.namedtuple('LossVariable', 'priors arm_original arm_tilde u_list kl_term')
 
 HIDDEN1_SIZE = 75
 
@@ -34,13 +38,29 @@ def acs_block(in_prob: torch.Tensor, llrs: torch.Tensor, transition_table: torch
     return torch.min(reshaped_trellis, dim=2)[0]
 
 
+def entropy(prob):
+    return -prob * torch.log(prob) - (1 - prob) * torch.log(1 - prob)
+
+
+def dropout_ori(x, logit, u):
+    dropout_prob = torch.sigmoid(logit)
+    z = (u < dropout_prob).float()
+    return x * z
+
+
+def dropout_tilde(x, logit, u):
+    dropout_prob_tilde = torch.sigmoid(-logit)
+    z_tilde = (u > dropout_prob_tilde).float()
+    return x * z_tilde
+
+
 class BayesianDNN(nn.Module):
     def __init__(self, n_states, length_scale):
         super(BayesianDNN, self).__init__()
         self.fc1 = nn.Linear(1, HIDDEN1_SIZE).to(DEVICE)
         self.fc2 = nn.Linear(HIDDEN1_SIZE, n_states).to(DEVICE)
         self.dropout_logit = nn.Parameter(torch.rand(HIDDEN1_SIZE).reshape(1, -1))
-        self.activ = nn.ReLU().to(DEVICE)
+        self.activation = nn.ReLU().to(DEVICE)
         self.sigmoid = nn.Sigmoid()
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.length_scale = length_scale
@@ -48,19 +68,17 @@ class BayesianDNN(nn.Module):
     def forward(self, raw_input, num_ensemble, phase):
         log_probs = 0
         if phase == Phase.TRAIN:
-            ARM_ori = []
-            ARM_tilde = []
-            u_list = []
+            arm_original, arm_tilde, u_list = [], [], []
 
         for ind_ensemble in range(num_ensemble):
 
             # first layer
-            x = self.activ(self.fc1(raw_input))
+            x = self.activation(self.fc1(raw_input))
             u = torch.rand(x.shape).to(DEVICE)
-            x = self.dropout_ori(x, self.dropout_logit, u)
+            x = dropout_ori(x, self.dropout_logit, u)
             if phase == Phase.TRAIN:
-                x_tilde = self.activ(self.fc1(raw_input))
-                x_tilde = self.dropout_tilde(x_tilde, self.dropout_logit, u)
+                x_tilde = self.activation(self.fc1(raw_input))
+                x_tilde = dropout_tilde(x_tilde, self.dropout_logit, u)
             else:
                 pass
 
@@ -69,9 +87,9 @@ class BayesianDNN(nn.Module):
             log_probs += self.log_softmax(out)
             if phase == Phase.TRAIN:
                 u_list.append(u)
-                ARM_ori.append(self.log_softmax(out))
+                arm_original.append(self.log_softmax(out))
                 out_tilde = self.fc2(x_tilde)
-                ARM_tilde.append(self.log_softmax(out_tilde))
+                arm_tilde.append(self.log_softmax(out_tilde))
 
         log_probs /= num_ensemble
         ## KL term if training
@@ -79,26 +97,19 @@ class BayesianDNN(nn.Module):
             # KL term
             scaling1 = (self.length_scale ** 2 / 2) * torch.sigmoid(self.dropout_logit).reshape(-1)
             first_layer_kl = scaling1 * torch.norm(self.fc1.weight, dim=1) ** 2
-            H1 = self.entropy(torch.sigmoid(self.dropout_logit).reshape(-1))
+            H1 = entropy(torch.sigmoid(self.dropout_logit).reshape(-1))
             kl_term = torch.sum(first_layer_kl - H1)
-            return log_probs, ARM_ori, ARM_tilde, u_list, kl_term
+            return LossVariable(priors=log_probs,
+                                arm_original=arm_original,
+                                arm_tilde=arm_tilde,
+                                u_list=u_list,
+                                kl_term=kl_term)
         else:
-            return log_probs, None, None, None, None
-
-    def entropy(self, prob):
-        return -prob * torch.log(prob) - (1 - prob) * torch.log(1 - prob)
-
-    @staticmethod
-    def dropout_ori(x, logit, u):
-        dropout_prob = torch.sigmoid(logit)
-        z = (u < dropout_prob).float()
-        return x * z
-
-    @staticmethod
-    def dropout_tilde(x, logit, u):
-        dropout_prob_tilde = torch.sigmoid(-logit)
-        z_tilde = (u > dropout_prob_tilde).float()
-        return x * z_tilde
+            return LossVariable(priors=log_probs,
+                                arm_original=None,
+                                arm_tilde=None,
+                                u_list=None,
+                                kl_term=None)
 
 
 class BayesianVNETDetector(nn.Module):
@@ -127,7 +138,7 @@ class BayesianVNETDetector(nn.Module):
         in_prob = torch.zeros([1, self.n_states]).to(DEVICE)
 
         if phase == Phase.TEST:
-            priors, _, _, _, _ = self.net(rx, self.ensemble_num, phase)
+            priors = self.net(rx, self.ensemble_num, phase).priors
             detected_word = torch.zeros(rx.shape).to(DEVICE)
             confidence_word = torch.zeros(rx.shape).to(DEVICE)
             for i in range(rx.shape[0]):
@@ -141,5 +152,4 @@ class BayesianVNETDetector(nn.Module):
 
             return detected_word, confidence_word
         else:
-            info_for_Bayesian_training = self.net(rx, self.ensemble_num, phase)
-            return info_for_Bayesian_training
+            return self.net(rx, self.ensemble_num, phase)
