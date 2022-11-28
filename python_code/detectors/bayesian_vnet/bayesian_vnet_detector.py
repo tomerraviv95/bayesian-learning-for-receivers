@@ -39,7 +39,7 @@ def acs_block(in_prob: torch.Tensor, llrs: torch.Tensor, transition_table: torch
 
 
 def entropy(prob):
-    return -prob * torch.log(prob) - (1 - prob) * torch.log(1 - prob)
+    return -prob * torch.log2(prob) - (1 - prob) * torch.log2(1 - prob)
 
 
 def dropout_ori(x, logit, u):
@@ -63,6 +63,7 @@ class BayesianDNN(nn.Module):
     To learn the dropout parameters we compute additional outputs such as KL term and output_tilde
     which will be used in the computed loss
     """
+
     def __init__(self, n_states: int, kl_scale: float):
         super(BayesianDNN, self).__init__()
         self.fc1 = nn.Linear(1, HIDDEN1_SIZE).to(DEVICE)
@@ -81,17 +82,17 @@ class BayesianDNN(nn.Module):
             # first layer
             x = self.activation(self.fc1(raw_input))
             u = torch.rand(x.shape).to(DEVICE)
-            x = dropout_ori(x, self.dropout_logit, u)
+            x_after_dropout = dropout_ori(x, self.dropout_logit, u)
             # second layer
-            out = self.fc2(x)
+            out = self.fc2(x_after_dropout)
             log_probs += self.log_softmax(out)
             # if in train phase, keep parameters in list and compute the tilde output for arm loss calculation
             if phase == Phase.TRAIN:
                 u_list.append(u)
+                # compute first variable output
                 arm_original.append(self.log_softmax(out))
-                # compute tilde output
-                x_tilde = self.activation(self.fc1(raw_input))
-                x_tilde = dropout_tilde(x_tilde, self.dropout_logit, u)
+                # compute second variable output
+                x_tilde = dropout_tilde(x, self.dropout_logit, u)
                 out_tilde = self.fc2(x_tilde)
                 arm_tilde.append(self.log_softmax(out_tilde))
 
@@ -99,10 +100,10 @@ class BayesianDNN(nn.Module):
         # add KL term if training
         if phase == Phase.TRAIN:
             # KL term
-            scaling1 = (self.kl_scale ** 2 / 2) * torch.sigmoid(self.dropout_logit).reshape(-1)
+            scaling1 = (self.kl_scale ** 2 / 2) * (torch.sigmoid(self.dropout_logit).reshape(-1))
             first_layer_kl = scaling1 * torch.norm(self.fc1.weight, dim=1) ** 2
             H1 = entropy(torch.sigmoid(self.dropout_logit).reshape(-1))
-            kl_term = torch.sum(first_layer_kl - H1)
+            kl_term = torch.mean(first_layer_kl - H1)
 
         return LossVariable(priors=log_probs, arm_original=arm_original, arm_tilde=arm_tilde,
                             u_list=u_list, kl_term=kl_term)

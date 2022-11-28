@@ -41,18 +41,18 @@ def get_linestyle(method_name: str) -> str:
 
 
 def get_marker(method_name: str) -> str:
-    if 'Always' in method_name:
+    if 'Bayesian' in method_name:
         return '.'
-    elif 'Random' in method_name:
+    elif 'ViterbiNet' in method_name:
         return 'X'
     else:
         raise ValueError('No such method!!!')
 
 
 def get_color(method_name: str) -> str:
-    if 'Always' in method_name:
-        return 'b'
-    elif 'Random' in method_name:
+    if 'Bayesian' in method_name:
+        return 'blue'
+    elif 'ViterbiNet' in method_name:
         return 'black'
     else:
         raise ValueError('No such method!!!')
@@ -101,11 +101,11 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
             names.append(all_curves[i][0])
 
     cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
-    if plot_type == PlotType.BY_BLOCK.name:
+    if plot_type == PlotType.BY_BLOCK:
         MARKER_EVERY = 10
         x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
         x_labels = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
-    elif plot_type == PlotType.BY_SNR.name:
+    elif plot_type == PlotType.BY_SNR:
         MARKER_EVERY = 1
         x_ticks = values
         x_labels = values
@@ -179,18 +179,18 @@ def plot_by_values2(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values
     plt.show()
 
 
-def populate_sers_dict(all_curves: List[Tuple[float, str]], names: List[str], plot_type: str) -> Tuple[
+def populate_sers_dict(all_curves: List[Tuple[float, str]], names: List[str], plot_type: PlotType) -> Tuple[
     str, Dict[str, List[np.ndarray]]]:
     sers_dict = {}
     for method_name in names:
         sers_list = []
-        for ser, cur_name in all_curves:
+        for cur_name, ser, _, _ in all_curves:
             if cur_name != method_name:
                 continue
-            if plot_type == 'plot_by_blocks':
+            if plot_type == PlotType.BY_BLOCK:
                 agg_ser = (np.cumsum(ser[0]) / np.arange(1, len(ser[0]) + 1))
                 sers_list.extend(agg_ser)
-            elif plot_type == 'plot_by_snrs':
+            elif plot_type == PlotType.BY_SNR:
                 mean_ser = np.mean(ser)
                 sers_list.append(mean_ser)
             else:
