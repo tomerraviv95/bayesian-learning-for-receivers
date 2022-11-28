@@ -81,7 +81,6 @@ def get_all_plots(dec: Trainer, run_over: bool, method_name: str, trial=None):
         save_pkl(plots_path, ber_total, type='ber')
         save_pkl(plots_path, correct_values_list, type='cor')
         save_pkl(plots_path, error_values_list, type='err')
-    print(ber_total, correct_values_list, error_values_list)
     return ber_total, correct_values_list, error_values_list
 
 
@@ -150,6 +149,8 @@ def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, st
     cur_name, reliability_dict = get_to_plot_values_dict(all_curves, names, plot_type)
     # plots all methods
     for method_name in names:
+        print(method_name)
+        plt.figure()
         correct_values_list, error_values_list = reliability_dict[method_name]
         x_centers = np.mean(np.concatenate([np.array(values)[:-1].reshape(-1, 1),
                                             np.array(values)[1:].reshape(-1, 1)], axis=1), axis=1)
@@ -183,7 +184,7 @@ def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, st
         plt.legend(loc='upper right', prop={'size': 15})
         plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'reliability_plot_{method_name}.png'),
                     bbox_inches='tight')
-    plt.show()
+        plt.show()
 
 
 def get_to_plot_values_dict(all_curves: List[Tuple[float, str]], names: List[str], plot_type: PlotType) -> Tuple[
