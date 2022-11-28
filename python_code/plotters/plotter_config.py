@@ -16,26 +16,16 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
     # figure 1
     if plot_type == PlotType.BY_SNR:
         params_dicts = [
-            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
-            {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
+            # {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            # {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
         ]
         methods_list = [
             'ViterbiNet'
@@ -44,24 +34,25 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'SNR', 'BER'
     elif plot_type == PlotType.BY_BLOCK:
         params_dicts = [
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
+            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
         ]
         methods_list = [
             'ViterbiNet'
         ]
         values = list(range(1, 101))
         xlabel, ylabel = 'block_index', 'BER'
-    elif plot_type == PlotType.BY_RELIABILITY.name:
+    elif plot_type == PlotType.BY_RELIABILITY:
         params_dicts = [
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-             'fading_in_channel': True, 'from_scratch': False},
+            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+             'blocks_num': 100},
+            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'blocks_num': 100}
         ]
         methods_list = [
             'ViterbiNet'
         ]
-        values = np.linspace(start=0.1, stop=1, step=0.1)
-        xlabel, ylabel = 'Reliability', 'Reliability'
+        values = np.linspace(start=0, stop=1, num=7)
+        xlabel, ylabel = 'Reliability', 'Metric'
     else:
         raise ValueError('No such plot type!!!')
 

@@ -78,6 +78,6 @@ class VNETDetector(nn.Module):
                 # update in-probabilities for next layer
                 in_prob = out_prob
 
-            return detected_word, confidence_word
+            return detected_word, 2 * confidence_word
         else:
             return priors

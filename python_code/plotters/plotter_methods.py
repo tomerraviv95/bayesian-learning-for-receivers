@@ -58,7 +58,7 @@ def compute_for_method(all_curves: List[Tuple[float, str]], method: str, params_
     conf = Config()
     conf.load_config(os.path.join(CONFIG_RUNS_DIR, params_dict['channel_type'], f'{method}.yaml'))
     trainer = CHANNEL_TYPE_TO_TRAINER_DICT[params_dict['channel_type']][params_dict['detector_type']]()
-    full_method_name = f'{trainer.__str__()} - {method}'
+    full_method_name = f'{trainer.__str__()}'
     print(full_method_name)
     name = set_method_name(conf, full_method_name, params_dict)
     gather_plots_by_trials(all_curves, conf, full_method_name, name, run_params_obj.run_over, run_params_obj.trial_num,

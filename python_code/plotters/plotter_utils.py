@@ -100,7 +100,7 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
         if all_curves[i][0] not in names:
             names.append(all_curves[i][0])
 
-    cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
+    cur_name, sers_dict = get_to_plot_values_dict(all_curves, names, plot_type)
     if plot_type == PlotType.BY_BLOCK:
         MARKER_EVERY = 10
         x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
@@ -132,8 +132,8 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
     plt.show()
 
 
-def plot_by_values2(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values: List[float], xlabel: str,
-                    ylabel: str, plot_type: str):
+def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values: List[float], xlabel: str,
+                               ylabel: str, plot_type: str):
     # path for the saved figure
     current_day_time = datetime.datetime.now()
     folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'
@@ -147,53 +147,63 @@ def plot_by_values2(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values
         if all_curves[i][0] not in names:
             names.append(all_curves[i][0])
 
-    cur_name, sers_dict = populate_sers_dict(all_curves, names, plot_type)
-    if plot_type == 'plot_by_blocks':
-        MARKER_EVERY = 10
-        x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
-        x_labels = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
-    elif plot_type == 'plot_by_snrs':
-        MARKER_EVERY = 1
-        x_ticks = values
-        x_labels = values
-    else:
-        raise ValueError("No such plot type!")
-
+    cur_name, reliability_dict = get_to_plot_values_dict(all_curves, names, plot_type)
     # plots all methods
     for method_name in names:
-        plt.plot(values, sers_dict[method_name], label=method_name,
-                 color=get_color(method_name),
-                 marker=get_marker(method_name), markersize=11,
-                 linestyle=get_linestyle(method_name), linewidth=2.2,
-                 markevery=MARKER_EVERY)
+        correct_values_list, error_values_list = reliability_dict[method_name]
+        x_centers = np.mean(np.concatenate([np.array(values)[:-1].reshape(-1, 1),
+                                            np.array(values)[1:].reshape(-1, 1)], axis=1), axis=1)
+        width = x_centers[0]
+        correct_values_list, error_values_list = np.array(correct_values_list), np.array(error_values_list)
 
-    plt.xticks(ticks=x_ticks, labels=x_labels)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.grid(which='both', ls='--')
-    plt.legend(loc='lower left', prop={'size': 15})
-    plt.yscale('log')
-    trainer_name = cur_name.split(' ')[0]
-    plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'coded_ber_versus_snrs_{trainer_name}.png'),
-                bbox_inches='tight')
+        avg_confidence_per_bin, avg_acc_per_bin = [], []
+        for val_j, val_j_plus_1 in zip(values[:-1], values[1:]):
+            avg_confidence_value_in_bin, avg_acc_value_in_bin = 0, 0
+            inbetween_correct_indices = np.logical_and(val_j <= correct_values_list,
+                                                       correct_values_list <= val_j_plus_1)
+            inbetween_errored_indices = np.logical_and(val_j <= error_values_list, error_values_list <= val_j_plus_1)
+            if inbetween_correct_indices.sum() + inbetween_errored_indices.sum() > 0:
+                correct_values = correct_values_list[inbetween_correct_indices]
+                errored_values = error_values_list[inbetween_errored_indices]
+                avg_acc_value_in_bin = len(correct_values) / (len(correct_values) + len(errored_values))
+                avg_confidence_value_in_bin = np.mean(np.concatenate([correct_values, errored_values]))
+            avg_acc_per_bin.append(avg_acc_value_in_bin)
+            avg_confidence_per_bin.append(avg_confidence_value_in_bin)
+            print(avg_confidence_value_in_bin, avg_acc_value_in_bin, inbetween_correct_indices.sum(),
+                  inbetween_errored_indices.sum())
+
+        plt.bar(x=x_centers, height=avg_confidence_per_bin, label=method_name + ' - Confidence', width=width,
+                color='red', alpha=0.4)
+        plt.bar(x=x_centers, height=avg_acc_per_bin, label=method_name + ' - Accuracy', width=width, color='blue',
+                alpha=0.4)
+
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.grid(which='both', ls='--')
+        plt.legend(loc='upper right', prop={'size': 15})
+        plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'reliability_plot_{method_name}.png'),
+                    bbox_inches='tight')
     plt.show()
 
 
-def populate_sers_dict(all_curves: List[Tuple[float, str]], names: List[str], plot_type: PlotType) -> Tuple[
+def get_to_plot_values_dict(all_curves: List[Tuple[float, str]], names: List[str], plot_type: PlotType) -> Tuple[
     str, Dict[str, List[np.ndarray]]]:
-    sers_dict = {}
+    values_to_plot_dict = {}
     for method_name in names:
-        sers_list = []
-        for cur_name, ser, _, _ in all_curves:
+        values_to_plot = []
+        for cur_name, ser, correct_values_list, error_values_list in all_curves:
             if cur_name != method_name:
                 continue
             if plot_type == PlotType.BY_BLOCK:
                 agg_ser = (np.cumsum(ser[0]) / np.arange(1, len(ser[0]) + 1))
-                sers_list.extend(agg_ser)
+                values_to_plot.extend(agg_ser)
             elif plot_type == PlotType.BY_SNR:
                 mean_ser = np.mean(ser)
-                sers_list.append(mean_ser)
+                values_to_plot.append(mean_ser)
+            elif plot_type == PlotType.BY_RELIABILITY:
+                values_to_plot.append(correct_values_list)
+                values_to_plot.append(error_values_list)
             else:
                 raise ValueError("No such plot type!")
-        sers_dict[method_name] = sers_list
-    return cur_name, sers_dict
+        values_to_plot_dict[method_name] = values_to_plot
+    return cur_name, values_to_plot_dict
