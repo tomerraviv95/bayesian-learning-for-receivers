@@ -26,7 +26,8 @@ class BayesianVNETTrainer(Trainer):
         self.probs_vec = None
         self.ensemble_num = 5
         self.kl_scale = 5
-        self.kl_beta = 1e-2
+        self.kl_beta = 1e-3
+        self.arm_beta = 2
         super().__init__()
 
     def __str__(self):
@@ -64,7 +65,7 @@ class BayesianVNETTrainer(Trainer):
         arm_loss = torch.mean(arm_loss)
         # KL Loss
         kl_term = self.kl_beta * est.kl_term
-        loss = data_fitting_loss_term + arm_loss + kl_term
+        loss = data_fitting_loss_term + self.arm_beta * arm_loss + kl_term
         return loss
 
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:

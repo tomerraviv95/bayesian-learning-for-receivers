@@ -9,7 +9,7 @@ from python_code.utils.constants import Phase
 
 LossVariable = collections.namedtuple('LossVariable', 'priors arm_original arm_tilde u_list kl_term')
 
-HIDDEN1_SIZE = 75
+HIDDEN1_SIZE = 200
 
 
 def create_transition_table(n_states: int) -> np.ndarray:
@@ -71,11 +71,16 @@ class BayesianDNN(nn.Module):
         self.dropout_logit = nn.Parameter(torch.rand(HIDDEN1_SIZE).reshape(1, -1))
         self.activation = nn.ReLU().to(DEVICE)
         self.sigmoid = nn.Sigmoid()
+        self.softmax = nn.Softmax(dim=1)
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.kl_scale = kl_scale
 
     def forward(self, raw_input: torch.Tensor, num_ensemble: int, phase: Phase):
-        log_probs = 0
+        if phase == Phase.TRAIN:
+            log_probs = 0
+        else:
+            log_probs = 0
+            probs = 0
         arm_original, arm_tilde, u_list, kl_term = [], [], [], 0
 
         for ind_ensemble in range(num_ensemble):
@@ -85,9 +90,9 @@ class BayesianDNN(nn.Module):
             x_after_dropout = dropout_ori(x, self.dropout_logit, u)
             # second layer
             out = self.fc2(x_after_dropout)
-            log_probs += self.log_softmax(out)
             # if in train phase, keep parameters in list and compute the tilde output for arm loss calculation
             if phase == Phase.TRAIN:
+                log_probs += self.log_softmax(out)
                 u_list.append(u)
                 # compute first variable output
                 arm_original.append(self.log_softmax(out))
@@ -95,8 +100,13 @@ class BayesianDNN(nn.Module):
                 x_tilde = dropout_tilde(x, self.dropout_logit, u)
                 out_tilde = self.fc2(x_tilde)
                 arm_tilde.append(self.log_softmax(out_tilde))
+            else:
+                probs += self.softmax(out)
 
-        log_probs /= num_ensemble
+        if phase == Phase.TRAIN:
+            log_probs /= num_ensemble
+        else:
+            log_probs = torch.log(probs / num_ensemble)
         # add KL term if training
         if phase == Phase.TRAIN:
             # KL term

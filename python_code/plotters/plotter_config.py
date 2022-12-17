@@ -16,8 +16,8 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
     # figure 1
     if plot_type == PlotType.BY_SNR:
         params_dicts = [
-            # {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
-            # {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
@@ -43,15 +43,15 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'block_index', 'BER'
     elif plot_type == PlotType.BY_RELIABILITY:
         params_dicts = [
-            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-             'blocks_num': 100},
-            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
-             'blocks_num': 100}
+            # {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+            #  'blocks_num': 25},
+            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'blocks_num': 25}
         ]
         methods_list = [
             'ViterbiNet'
         ]
-        values = np.linspace(start=0, stop=1, num=7)
+        values = np.linspace(start=0, stop=1, num=6)
         xlabel, ylabel = 'Reliability', 'Metric'
     else:
         raise ValueError('No such plot type!!!')
