@@ -43,9 +43,9 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'block_index', 'BER'
     elif plot_type == PlotType.BY_RELIABILITY:
         params_dicts = [
-            # {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
-            #  'blocks_num': 25},
-            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+             'blocks_num': 25},
+            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
              'blocks_num': 25}
         ]
         methods_list = [

@@ -69,7 +69,7 @@ class BayesianDNN(nn.Module):
         self.fc1 = nn.Linear(1, HIDDEN1_SIZE).to(DEVICE)
         self.fc2 = nn.Linear(HIDDEN1_SIZE, n_states).to(DEVICE)
         self.dropout_logit = nn.Parameter(torch.rand(HIDDEN1_SIZE).reshape(1, -1))
-        self.T = nn.Parameter(torch.ones(1))
+        self.T = 2 # nn.Parameter(torch.ones(1))
         self.activation = nn.ReLU().to(DEVICE)
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)

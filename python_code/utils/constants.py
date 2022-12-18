@@ -4,7 +4,7 @@ HALF = 0.5
 QUARTER = 0.25
 C = 0.5
 H_COEF = 0.8
-TRAIN_VAL_SPLIT_RATIO = 0.9
+TRAIN_VAL_SPLIT_RATIO = 1
 
 
 class Phase(Enum):

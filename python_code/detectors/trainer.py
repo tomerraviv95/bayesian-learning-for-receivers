@@ -161,6 +161,8 @@ class Trainer(object):
         return total_ber, correct_values_list, error_values_list
 
     def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor, phase: Phase = None) -> float:
+        if phase is None:
+            raise ValueError("Phase is None in training loop, needs to be either train or val")
         # calculate loss
         loss = self.calc_loss(est=est, tx=tx, phase=phase)
         current_loss = loss.item()

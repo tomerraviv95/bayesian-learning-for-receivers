@@ -24,7 +24,7 @@ class VNETTrainer(Trainer):
         self.n_user = 1
         self.n_ant = 1
         self.lr = 5e-3
-        self.temp_lr = 1e-3
+        self.temp_lr = 1e-2
         self.probs_vec = None
         super().__init__()
 
@@ -71,15 +71,15 @@ class VNETTrainer(Trainer):
         for i in range(EPOCHS):
             # pass through detector
             soft_estimation = self.detector(rx[:TRAIN_VAL_SPLIT].float(), phase=Phase.TRAIN)
-            current_loss = self.run_train_loop(est=soft_estimation, tx=tx[:TRAIN_VAL_SPLIT])
+            current_loss = self.run_train_loop(est=soft_estimation, tx=tx[:TRAIN_VAL_SPLIT], phase=Phase.TRAIN)
             loss += current_loss
 
         # freeze all but the temperature parameter
-        self.deep_learning_setup(self.temp_lr)
-        for param in self.detector.parameters():
-            param.requires_grad = False
-        self.detector.T.requires_grad = True
-        for i in range(EPOCHS2):
-            # pass through detector
-            soft_estimation = self.detector(rx[TRAIN_VAL_SPLIT:].float(), phase=Phase.VAL)
-            self.run_train_loop(est=soft_estimation, tx=tx[TRAIN_VAL_SPLIT:])
+        # self.deep_learning_setup(self.temp_lr)
+        # for param in self.detector.parameters():
+        #     param.requires_grad = False
+        # self.detector.T.requires_grad = True
+        # for i in range(EPOCHS2):
+        #     # pass through detector
+        #     soft_estimation = self.detector(rx[TRAIN_VAL_SPLIT:].float(), phase=Phase.VAL)
+        #     self.run_train_loop(est=soft_estimation, tx=tx[TRAIN_VAL_SPLIT:], phase=Phase.VAL)
