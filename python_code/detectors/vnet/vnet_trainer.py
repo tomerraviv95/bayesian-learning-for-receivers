@@ -70,8 +70,8 @@ class VNETTrainer(Trainer):
         loss = 0
         for i in range(EPOCHS):
             # pass through detector
-            soft_estimation = self.detector(rx.float(), phase=Phase.TRAIN)
-            current_loss = self.run_train_loop(est=soft_estimation, tx=tx)
+            soft_estimation = self.detector(rx[:TRAIN_VAL_SPLIT].float(), phase=Phase.TRAIN)
+            current_loss = self.run_train_loop(est=soft_estimation, tx=tx[:TRAIN_VAL_SPLIT])
             loss += current_loss
 
         # freeze all but the temperature parameter
@@ -83,4 +83,3 @@ class VNETTrainer(Trainer):
             # pass through detector
             soft_estimation = self.detector(rx[TRAIN_VAL_SPLIT:].float(), phase=Phase.VAL)
             self.run_train_loop(est=soft_estimation, tx=tx[TRAIN_VAL_SPLIT:])
-        print(self.detector.T)
