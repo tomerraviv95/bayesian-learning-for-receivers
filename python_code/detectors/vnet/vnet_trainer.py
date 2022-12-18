@@ -5,11 +5,12 @@ from python_code.channel.modulator import BPSKModulator
 from python_code.detectors.trainer import Trainer
 from python_code.detectors.vnet.vnet_detector import VNETDetector
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, TRAIN_VAL_SPLIT_RATIO
 from python_code.utils.trellis_utils import calculate_siso_states
 
 conf = Config()
 EPOCHS = 500
+EPOCHS2 = 250
 
 
 class VNETTrainer(Trainer):
@@ -23,6 +24,7 @@ class VNETTrainer(Trainer):
         self.n_user = 1
         self.n_ant = 1
         self.lr = 5e-3
+        self.temp_lr = 1e-3
         self.probs_vec = None
         super().__init__()
 
@@ -35,7 +37,7 @@ class VNETTrainer(Trainer):
         """
         self.detector = VNETDetector(n_states=self.n_states)
 
-    def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor) -> torch.Tensor:
+    def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor, phase: Phase) -> torch.Tensor:
         """
         Cross Entropy loss - distribution over states versus the gt state label
         :param est: [1,transmission_length,n_states], each element is a probability
@@ -61,12 +63,24 @@ class VNETTrainer(Trainer):
         """
         if not conf.fading_in_channel:
             self._initialize_detector()
-        self.deep_learning_setup()
+        self.deep_learning_setup(self.lr)
 
         # run training loops
+        TRAIN_VAL_SPLIT = int(TRAIN_VAL_SPLIT_RATIO * tx.shape[0])
         loss = 0
         for i in range(EPOCHS):
             # pass through detector
             soft_estimation = self.detector(rx.float(), phase=Phase.TRAIN)
             current_loss = self.run_train_loop(est=soft_estimation, tx=tx)
             loss += current_loss
+
+        # freeze all but the temperature parameter
+        self.deep_learning_setup(self.temp_lr)
+        for param in self.detector.parameters():
+            param.requires_grad = False
+        self.detector.T.requires_grad = True
+        for i in range(EPOCHS2):
+            # pass through detector
+            soft_estimation = self.detector(rx[TRAIN_VAL_SPLIT:].float(), phase=Phase.VAL)
+            self.run_train_loop(est=soft_estimation, tx=tx[TRAIN_VAL_SPLIT:])
+        print(self.detector.T)

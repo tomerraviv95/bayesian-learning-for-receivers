@@ -46,6 +46,7 @@ class VNETDetector(nn.Module):
         self.transition_table_array = create_transition_table(n_states)
         self.transition_table = torch.Tensor(self.transition_table_array).to(DEVICE)
         self._initialize_dnn()
+        self.T = nn.Parameter(torch.ones(1))
 
     def _initialize_dnn(self):
         layers = [nn.Linear(1, HIDDEN1_SIZE),
@@ -63,8 +64,12 @@ class VNETDetector(nn.Module):
         """
         # initialize input probabilities
         in_prob = torch.zeros([1, self.n_states]).to(DEVICE)
-        func = torch.nn.LogSoftmax(dim=1)
-        priors = func(self.net(rx))
+        if phase == Phase.TRAIN:
+            func = torch.nn.LogSoftmax(dim=1)
+            priors = func(self.net(rx))
+        else:
+            func = torch.nn.Softmax(dim=1)
+            priors = torch.log(func(self.net(rx).clone().detach() / self.T.to(DEVICE)))
 
         if phase == Phase.TEST:
             detected_word = torch.zeros(rx.shape).to(DEVICE)

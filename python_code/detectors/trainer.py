@@ -9,6 +9,7 @@ from torch.optim import RMSprop, Adam, SGD
 from python_code import DEVICE
 from python_code.channel.channel_dataset import ChannelModelDataset
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 from python_code.utils.metrics import calculate_ber
 
 conf = Config()
@@ -42,25 +43,48 @@ class Trainer(object):
         self.detector = None
 
     # calculate train loss
-    def calc_loss(self, est: torch.Tensor, tx: torch.Tensor) -> torch.Tensor:
+    def calc_loss(self, est: torch.Tensor, tx: torch.Tensor, phase: Phase) -> torch.Tensor:
         """
          Every trainer must have some loss calculation
         """
         pass
 
     # setup the optimization algorithm
-    def deep_learning_setup(self):
+    def deep_learning_setup(self, lr: float):
         """
         Sets up the optimizer and loss criterion
         """
         if conf.optimizer_type == 'Adam':
             self.optimizer = Adam(filter(lambda p: p.requires_grad, self.detector.parameters()),
-                                  lr=self.lr)
+                                  lr=lr)
         elif conf.optimizer_type == 'RMSprop':
             self.optimizer = RMSprop(filter(lambda p: p.requires_grad, self.detector.parameters()),
-                                     lr=self.lr)
+                                     lr=lr)
         elif conf.optimizer_type == 'SGD':
             self.optimizer = SGD(filter(lambda p: p.requires_grad, self.detector.parameters()),
+                                 lr=lr)
+        else:
+            raise NotImplementedError("No such optimizer implemented!!!")
+        if conf.loss_type == 'CrossEntropy':
+            self.criterion = CrossEntropyLoss().to(DEVICE)
+        elif conf.loss_type == 'MSE':
+            self.criterion = MSELoss().to(DEVICE)
+        else:
+            raise NotImplementedError("No such loss function implemented!!!")
+
+    # setup the optimization algorithm
+    def calibration_deep_learning_setup(self):
+        """
+        Sets up the optimizer and loss criterion
+        """
+        if conf.optimizer_type == 'Adam':
+            self.optimizer = Adam(filter(lambda p: p.requires_grad, self.detector.net.dropout_logit),
+                                  lr=self.lr)
+        elif conf.optimizer_type == 'RMSprop':
+            self.optimizer = RMSprop(filter(lambda p: p.requires_grad, self.detector.net.dropout_logit),
+                                     lr=self.lr)
+        elif conf.optimizer_type == 'SGD':
+            self.optimizer = SGD(filter(lambda p: p.requires_grad, self.detector.net.dropout_logit),
                                  lr=self.lr)
         else:
             raise NotImplementedError("No such optimizer implemented!!!")
@@ -136,9 +160,9 @@ class Trainer(object):
         print(f'Final ser: {sum(total_ber) / len(total_ber)}')
         return total_ber, correct_values_list, error_values_list
 
-    def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor) -> float:
+    def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor, phase: Phase = None) -> float:
         # calculate loss
-        loss = self.calc_loss(est=est, tx=tx)
+        loss = self.calc_loss(est=est, tx=tx, phase=phase)
         current_loss = loss.item()
         # back propagation
         self.optimizer.zero_grad()
