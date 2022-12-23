@@ -110,7 +110,8 @@ class Trainer(object):
         """
         pass
 
-    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None, h: np.ndarray = None) -> Tuple[
+        torch.Tensor, torch.Tensor]:
         """
         Every trainer must have some forward pass for its detector
         """
@@ -146,11 +147,11 @@ class Trainer(object):
                 # re-train the detector
                 self._online_training(tx_pilot, rx_pilot)
             # detect data part after training on the pilot part
-            detected_word, confidence_word = self.forward(rx_data, self.probs_vec)
+            detected_word, (confident_bits, confidence_word) = self.forward(rx_data, self.probs_vec, h)
             # calculate accuracy
             ber = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])  #
-            correct_values = confidence_word[torch.eq(tx_data[:, :rx.shape[1]], detected_word)].tolist()
-            error_values = confidence_word[~torch.eq(tx_data[:, :rx.shape[1]], detected_word)].tolist()
+            correct_values = confidence_word[torch.eq(tx_data[:, :rx.shape[1]], confident_bits)].tolist()
+            error_values = confidence_word[~torch.eq(tx_data[:, :rx.shape[1]], confident_bits)].tolist()
             print(f'current: {block_ind, ber}')
             total_ber.append(ber)
             correct_values_list.extend(correct_values)

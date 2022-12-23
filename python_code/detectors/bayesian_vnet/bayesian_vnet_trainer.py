@@ -5,12 +5,11 @@ from python_code.channel.modulator import BPSKModulator
 from python_code.detectors.bayesian_vnet.bayesian_vnet_detector import BayesianVNETDetector, LossVariable
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase, HALF, TRAIN_VAL_SPLIT_RATIO
+from python_code.utils.constants import Phase, HALF
 from python_code.utils.trellis_utils import calculate_siso_states
 
 conf = Config()
 EPOCHS = 500
-EPOCHS2 = 250
 
 
 class BayesianVNETTrainer(Trainer):
@@ -72,7 +71,7 @@ class BayesianVNETTrainer(Trainer):
             loss += self.arm_beta * arm_loss + kl_term
         return loss
 
-    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
+    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
         detected_word = self.detector(rx.float(), phase=Phase.TEST)
         return detected_word
@@ -90,20 +89,9 @@ class BayesianVNETTrainer(Trainer):
         self.deep_learning_setup(self.lr)
 
         # run training loops
-        TRAIN_VAL_SPLIT = int(TRAIN_VAL_SPLIT_RATIO * tx.shape[0])
         loss = 0
         for i in range(EPOCHS):
             # pass through detector
-            soft_estimation = self.detector(rx[:TRAIN_VAL_SPLIT].float(), phase=Phase.TRAIN)
-            current_loss = self.run_train_loop(est=soft_estimation, tx=tx[:TRAIN_VAL_SPLIT], phase=Phase.TRAIN)
+            soft_estimation = self.detector(rx.float(), phase=Phase.TRAIN)
+            current_loss = self.run_train_loop(est=soft_estimation, tx=tx, phase=Phase.TRAIN)
             loss += current_loss
-
-        # freeze all but the temperature parameter
-        # self.deep_learning_setup(self.temp_lr)
-        # for param in self.detector.parameters():
-        #     param.requires_grad = False
-        # self.detector.net.T.requires_grad = True
-        # for i in range(EPOCHS2):
-        #     # pass through detector
-        #     soft_estimation = self.detector(rx[TRAIN_VAL_SPLIT:].float(), phase=Phase.VAL)
-        #     self.run_train_loop(est=soft_estimation, tx=tx[TRAIN_VAL_SPLIT:], phase=Phase.VAL)

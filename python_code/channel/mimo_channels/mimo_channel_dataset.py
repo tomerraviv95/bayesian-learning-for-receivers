@@ -39,11 +39,15 @@ class MIMOChannel:
 
     def get_vectors(self, snr: float, index: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         # get channel values
+        h = self.get_channel_coef(index)
+        tx, rx = self._transmit(h, snr)
+        return tx, h, rx
+
+    def get_channel_coef(self, index):
         if conf.channel_model == ChannelModels.Synthetic.name:
             h = SEDChannel.calculate_channel(N_ANT, N_USER, index, conf.fading_in_channel)
         elif conf.channel_model == ChannelModels.Cost2100.name:
             h = Cost2100MIMOChannel.calculate_channel(N_ANT, N_USER, index, conf.fading_in_channel)
         else:
             raise ValueError("No such channel model!!!")
-        tx, rx = self._transmit(h, snr)
-        return tx, h, rx
+        return h

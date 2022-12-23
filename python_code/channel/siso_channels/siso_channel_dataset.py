@@ -46,11 +46,15 @@ class SISOChannel:
     def get_vectors(self, snr: float, index: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         # get channel values
         # transmit through noisy channel
+        h = self.get_channel_coef(index)
+        tx, rx = self._transmit(h, snr)
+        return tx, h, rx
+
+    def get_channel_coef(self, index):
         if conf.channel_model == ChannelModels.Synthetic.name:
             h = ISIAWGNChannel.calculate_channel(MEMORY_LENGTH, fading=conf.fading_in_channel, index=index)
         elif conf.channel_model == ChannelModels.Cost2100.name:
             h = Cost2100SISOChannel.calculate_channel(MEMORY_LENGTH, fading=conf.fading_in_channel, index=index)
         else:
             raise ValueError("No such channel model!!!")
-        tx, rx = self._transmit(h, snr)
-        return tx, h, rx
+        return h

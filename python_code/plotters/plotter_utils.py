@@ -181,6 +181,7 @@ def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, st
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.grid(which='both', ls='--')
+        plt.ylim([0, 1])
         plt.legend(loc='upper right', prop={'size': 15})
         plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'reliability_plot_{method_name}.png'),
                     bbox_inches='tight')

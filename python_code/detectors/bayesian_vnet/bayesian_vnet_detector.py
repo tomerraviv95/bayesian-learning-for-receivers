@@ -1,41 +1,16 @@
 import collections
+from typing import Tuple
 
-import numpy as np
 import torch
 import torch.nn as nn
 
 from python_code import DEVICE
 from python_code.utils.constants import Phase
+from python_code.utils.trellis_utils import create_transition_table, acs_block
 
 LossVariable = collections.namedtuple('LossVariable', 'priors arm_original arm_tilde u_list kl_term')
 
 HIDDEN1_SIZE = 200
-
-
-def create_transition_table(n_states: int) -> np.ndarray:
-    """
-    creates transition table of size [n_states,2]
-    previous state of state i and input bit b is the state in cell [i,b]
-    """
-    transition_table = np.concatenate([np.arange(n_states), np.arange(n_states)]).reshape(n_states, 2)
-    return transition_table
-
-
-def acs_block(in_prob: torch.Tensor, llrs: torch.Tensor, transition_table: torch.Tensor, n_states: int) -> [
-    torch.Tensor, torch.LongTensor]:
-    """
-    Viterbi ACS block
-    :param in_prob: last stage probabilities, [batch_size,n_states]
-    :param llrs: edge probabilities, [batch_size,1]
-    :param transition_table: transitions
-    :param n_states: number of states
-    :return: current stage probabilities, [batch_size,n_states]
-    """
-    transition_ind = transition_table.reshape(-1).repeat(in_prob.size(0)).long()
-    batches_ind = torch.arange(in_prob.size(0)).repeat_interleave(2 * n_states)
-    trellis = (in_prob + llrs)[batches_ind, transition_ind]
-    reshaped_trellis = trellis.reshape(-1, n_states, 2)
-    return torch.min(reshaped_trellis, dim=2)[0]
 
 
 def entropy(prob):
@@ -69,7 +44,7 @@ class BayesianDNN(nn.Module):
         self.fc1 = nn.Linear(1, HIDDEN1_SIZE).to(DEVICE)
         self.fc2 = nn.Linear(HIDDEN1_SIZE, n_states).to(DEVICE)
         self.dropout_logit = nn.Parameter(torch.rand(HIDDEN1_SIZE).reshape(1, -1))
-        self.T = 2 # nn.Parameter(torch.ones(1))
+        # self.T = 1 # nn.Parameter(torch.ones(1))
         self.activation = nn.ReLU().to(DEVICE)
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
@@ -102,7 +77,7 @@ class BayesianDNN(nn.Module):
                 out_tilde = self.fc2(x_tilde)
                 arm_tilde.append(self.log_softmax(out_tilde))
             else:
-                probs += self.softmax(out.clone().detach()/self.T)
+                probs += self.softmax(out.clone().detach())  # /self.T
 
         if phase == Phase.TRAIN:
             log_probs /= num_ensemble
@@ -133,30 +108,25 @@ class BayesianVNETDetector(nn.Module):
         self.net = BayesianDNN(self.n_states, kl_scale).to(DEVICE)
         self.ensemble_num = ensemble_num
 
-    def forward(self, rx: torch.Tensor, phase: Phase) -> torch.Tensor:
-        """
-        The forward pass of the ViterbiNet algorithm
-        :param rx: input values, size [batch_size,transmission_length]
-        :param phase: Phase.TRAIN or Phase.TEST
-        :returns if in Phase.TRAIN - the estimated priors [batch_size,transmission_length,n_states]
-        if in Phase.TEST - the detected words [n_batch,transmission_length]
-        """
+    def forward(self, rx: torch.Tensor, phase: Phase, index: int = None) -> Tuple[
+        torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+
         # initialize input probabilities
         in_prob = torch.zeros([1, self.n_states]).to(DEVICE)
 
         if phase == Phase.TEST:
             priors = self.net(rx, self.ensemble_num, phase).priors
+            confident_bits = (torch.argmax(torch.exp(priors), dim=1) % 2).reshape(-1, 1)
+            confidence_word = torch.amax(torch.exp(priors), dim=1).reshape(-1, 1)
             detected_word = torch.zeros(rx.shape).to(DEVICE)
-            confidence_word = torch.zeros(rx.shape).to(DEVICE)
             for i in range(rx.shape[0]):
                 # get the lsb of the state
                 detected_word[i] = torch.argmin(in_prob, dim=1) % 2
-                confidence_word[i] = torch.amax(torch.softmax(-in_prob, dim=1), dim=1)
                 # run one Viterbi stage
                 out_prob = acs_block(in_prob, -priors[i], self.transition_table, self.n_states)
                 # update in-probabilities for next layer
                 in_prob = out_prob
 
-            return detected_word, 2 * confidence_word
+            return detected_word, (confident_bits, confidence_word)
         else:
             return self.net(rx, self.ensemble_num, phase)
