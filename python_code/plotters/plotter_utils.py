@@ -184,6 +184,13 @@ def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, st
         plt.bar(x=x_centers, height=avg_acc_per_bin, label=method_name + ' - Accuracy', width=width, color='blue',
                 alpha=0.4)
 
+        # these are matplotlib.patch.Patch properties
+        props = dict(boxstyle='square', facecolor='lavender', alpha=0.3)
+
+        # place a text box in upper left in axes coords
+        plt.text(0.05, 0.95, f"ECE={round(ece_measure, 3)}", fontsize=26,
+                 verticalalignment='top', bbox=props)
+
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.grid(which='both', ls='--')
