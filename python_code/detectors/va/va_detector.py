@@ -6,10 +6,13 @@ import torch.nn as nn
 
 from python_code import DEVICE
 from python_code.channel.modulator import BPSKModulator
+from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase, HALF
 from python_code.utils.trellis_utils import create_transition_table, acs_block
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+conf = Config()
 
 
 class VADetector(nn.Module):
@@ -38,7 +41,7 @@ class VADetector(nn.Module):
         state_priors = self.compute_state_priors(h)
         priors = y - state_priors.T.repeat(repeats=[y.shape[0] // state_priors.shape[1], 1])
         # to llr representation
-        snr_value = 10 ** (12 / 10)
+        snr_value = 10 ** (conf.snr / 10)
         sigma = (snr_value ** (-HALF))
         priors2 = torch.exp(- priors ** 2 / (2 * sigma ** 2))
         return priors2 / priors2.sum(dim=1).reshape(-1, 1)
@@ -50,11 +53,12 @@ class VADetector(nn.Module):
         in_prob = torch.zeros([1, self.n_states]).to(device)
 
         # compute transition likelihood priors
-        priors = self.compute_likelihood_priors(rx, h)
+        probs = self.compute_likelihood_priors(rx, h)
+        priors = torch.log(probs)
 
         if phase == Phase.TEST:
-            confident_bits = (torch.argmax(priors, dim=1) % 2).reshape(-1, 1)
-            confidence_word = torch.amax(priors, dim=1).reshape(-1, 1)
+            confident_bits = (torch.argmax(probs, dim=1) % 2).reshape(-1, 1)
+            confidence_word = torch.amax(probs, dim=1).reshape(-1, 1)
             detected_word = torch.zeros(rx.shape).to(DEVICE)
             for i in range(rx.shape[0]):
                 # get the lsb of the state
