@@ -28,7 +28,7 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
             {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
         ]
         methods_list = [
-            'ViterbiNet'
+            'Regular'
         ]
         values = list(range(9, 14))
         xlabel, ylabel = 'SNR', 'BER'
@@ -37,7 +37,7 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
             {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
         ]
         methods_list = [
-            'ViterbiNet'
+            'Regular'
         ]
         values = list(range(1, 101))
         xlabel, ylabel = 'block_index', 'BER'
@@ -46,10 +46,12 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
             {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
              'blocks_num': 50},
             {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'blocks_num': 50},
+            {'snr': 12, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name,
              'blocks_num': 50}
         ]
         methods_list = [
-            'ViterbiNet'
+            'Regular'
         ]
         values = np.linspace(start=0, stop=1, num=6)
         xlabel, ylabel = 'Reliability', 'Metric'

@@ -1,4 +1,3 @@
-import math
 from typing import Tuple
 
 import numpy as np
@@ -7,7 +6,7 @@ import torch.nn as nn
 
 from python_code import DEVICE
 from python_code.channel.modulator import BPSKModulator
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, HALF
 from python_code.utils.trellis_utils import create_transition_table, acs_block
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -25,6 +24,7 @@ class VADetector(nn.Module):
         self.n_states = n_states
         self.transition_table_array = create_transition_table(n_states)
         self.transition_table = torch.Tensor(self.transition_table_array).to(device)
+        self.softmax = torch.nn.Softmax(dim=1)
 
     def compute_state_priors(self, h: torch.Tensor) -> torch.Tensor:
         all_states_decimal = np.arange(self.n_states).astype(np.uint8).reshape(-1, 1)
@@ -36,12 +36,12 @@ class VADetector(nn.Module):
     def compute_likelihood_priors(self, y: torch.Tensor, h: torch.Tensor):
         # compute priors
         state_priors = self.compute_state_priors(h)
-        priors = y.unsqueeze(dim=2) - state_priors.T.repeat(
-            repeats=[y.shape[0] // state_priors.shape[1], 1]).unsqueeze(
-            dim=1)
+        priors = y - state_priors.T.repeat(repeats=[y.shape[0] // state_priors.shape[1], 1])
         # to llr representation
-        priors = priors ** 2 / 2 - math.log(math.sqrt(2 * math.pi))
-        return -priors.reshape(y.shape[0], -1)
+        snr_value = 10 ** (12 / 10)
+        sigma = (snr_value ** (-HALF))
+        priors2 = torch.exp(- priors ** 2 / (2 * sigma ** 2))
+        return priors2 / priors2.sum(dim=1).reshape(-1, 1)
 
     def forward(self, rx: torch.Tensor, phase: Phase, h: torch.Tensor) -> Tuple[
         torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
@@ -53,8 +53,8 @@ class VADetector(nn.Module):
         priors = self.compute_likelihood_priors(rx, h)
 
         if phase == Phase.TEST:
-            confident_bits = (torch.argmax(torch.exp(priors), dim=1) % 2).reshape(-1, 1)
-            confidence_word = torch.amax(torch.exp(priors), dim=1).reshape(-1, 1)
+            confident_bits = (torch.argmax(priors, dim=1) % 2).reshape(-1, 1)
+            confidence_word = torch.amax(priors, dim=1).reshape(-1, 1)
             detected_word = torch.zeros(rx.shape).to(DEVICE)
             for i in range(rx.shape[0]):
                 # get the lsb of the state
