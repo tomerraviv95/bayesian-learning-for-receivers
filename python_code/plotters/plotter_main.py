@@ -7,7 +7,7 @@ if __name__ == '__main__':
     trial_num = 1  # number of trials per point estimate, used to reduce noise by averaging results of multiple runs
     run_params_obj = RunParams(run_over=run_over,
                                trial_num=trial_num)
-    plot_type = PlotType.BY_RELIABILITY
+    plot_type = PlotType.BY_SNR_STATIC_NON_LINEAR
     print(plot_type.name)
     params_dicts, methods_list, values, xlabel, ylabel = get_config(plot_type)
     all_curves = []
@@ -18,7 +18,7 @@ if __name__ == '__main__':
             print(params_dict)
             compute_for_method(all_curves, method, params_dict, run_params_obj)
 
-    if plot_type == PlotType.BY_RELIABILITY:
+    if plot_type == PlotType.BY_RELIABILITY or plot_type == PlotType.BY_RELIABILITY_NON_LINEAR:
         plot_by_reliability_values(all_curves, values, xlabel, ylabel, plot_type)
     else:
         plot_by_values(all_curves, values, xlabel, ylabel, plot_type)

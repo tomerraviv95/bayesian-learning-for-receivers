@@ -198,7 +198,7 @@ def get_to_plot_values_dict(all_curves: List[Tuple[float, str]], names: List[str
             if plot_type == PlotType.BY_BLOCK:
                 agg_ser = (np.cumsum(ser[0]) / np.arange(1, len(ser[0]) + 1))
                 values_to_plot.extend(agg_ser)
-            elif plot_type == PlotType.BY_RELIABILITY:
+            elif plot_type == PlotType.BY_RELIABILITY or plot_type == PlotType.BY_RELIABILITY_NON_LINEAR:
                 values_to_plot.append(correct_values_list)
                 values_to_plot.append(error_values_list)
             else:

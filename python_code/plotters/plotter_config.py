@@ -12,6 +12,7 @@ class PlotType(Enum):
     BY_SNR_FADING_LINEAR = 'BY_SNR_FADING_LINEAR'
     BY_SNR_STATIC_NON_LINEAR = 'BY_SNR_STATIC_NON_LINEAR'
     BY_RELIABILITY = 'BY_RELIABILITY'
+    BY_RELIABILITY_NON_LINEAR = 'BY_RELIABILITY_NON_LINEAR'
 
 
 def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
@@ -131,6 +132,20 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
             {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 10, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name}
+        ]
+        methods_list = [
+            'Regular'
+        ]
+        values = np.linspace(start=0, stop=1, num=9)
+        xlabel, ylabel = 'Reliability', 'Metric'
+    elif plot_type == PlotType.BY_RELIABILITY_NON_LINEAR:
+        params_dicts = [
+            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+             'linear': False},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+             'linear': False},
+            {'snr': 10, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name,
+             'linear': False}
         ]
         methods_list = [
             'Regular'
