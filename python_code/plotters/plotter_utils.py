@@ -10,6 +10,7 @@ from dir_definitions import FIGURES_DIR, PLOTS_DIR
 from python_code.detectors.trainer import Trainer
 from python_code.plotters.plotter_config import PlotType
 from python_code.utils.config_singleton import Config
+from python_code.utils.metrics import calculate_reliability_and_ece
 from python_code.utils.python_utils import load_pkl, save_pkl
 
 mpl.rcParams['xtick.labelsize'] = 24
@@ -32,8 +33,12 @@ MARKER_EVERY = 5
 
 
 def get_linestyle(method_name: str) -> str:
-    if 'ViterbiNet' in method_name or 'DeepSIC' in method_name:
+    if 'Bayesian' in method_name:
         return 'solid'
+    elif 'ViterbiNet' in method_name:
+        return 'dashed'
+    elif 'Viterbi' in method_name:
+        return 'dotted'
     elif 'RNN' in method_name or 'DNN' in method_name:
         return 'dashed'
     else:
@@ -42,9 +47,11 @@ def get_linestyle(method_name: str) -> str:
 
 def get_marker(method_name: str) -> str:
     if 'Bayesian' in method_name:
-        return '.'
+        return 'o'
     elif 'ViterbiNet' in method_name:
         return 'X'
+    elif 'Viterbi' in method_name:
+        return 's'
     else:
         raise ValueError('No such method!!!')
 
@@ -54,6 +61,8 @@ def get_color(method_name: str) -> str:
         return 'blue'
     elif 'ViterbiNet' in method_name:
         return 'black'
+    elif 'Viterbi' in method_name:
+        return 'red'
     else:
         raise ValueError('No such method!!!')
 
@@ -104,12 +113,10 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
         MARKER_EVERY = 10
         x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
         x_labels = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
-    elif plot_type == PlotType.BY_SNR:
+    else:
         MARKER_EVERY = 1
         x_ticks = values
         x_labels = values
-    else:
-        raise ValueError("No such plot type!")
 
     # plots all methods
     for method_name in names:
@@ -155,29 +162,8 @@ def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, st
         x_centers = np.mean(np.concatenate([np.array(values)[:-1].reshape(-1, 1),
                                             np.array(values)[1:].reshape(-1, 1)], axis=1), axis=1)
         width = x_centers[0]
-        correct_values_list, error_values_list = np.array(correct_values_list), np.array(error_values_list)
-
-        avg_confidence_per_bin, avg_acc_per_bin, inbetween_indices_number_list = [], [], []
-        for val_j, val_j_plus_1 in zip(values[:-1], values[1:]):
-            avg_confidence_value_in_bin, avg_acc_value_in_bin = 0, 0
-            inbetween_correct_indices = np.logical_and(val_j <= correct_values_list,
-                                                       correct_values_list <= val_j_plus_1)
-            inbetween_errored_indices = np.logical_and(val_j <= error_values_list, error_values_list <= val_j_plus_1)
-            inbetween_indices_number = inbetween_correct_indices.sum() + inbetween_errored_indices.sum()
-            if inbetween_indices_number > 0:
-                correct_values = correct_values_list[inbetween_correct_indices]
-                errored_values = error_values_list[inbetween_errored_indices]
-                avg_acc_value_in_bin = len(correct_values) / (len(correct_values) + len(errored_values))
-                avg_confidence_value_in_bin = np.mean(np.concatenate([correct_values, errored_values]))
-            avg_acc_per_bin.append(avg_acc_value_in_bin)
-            avg_confidence_per_bin.append(avg_confidence_value_in_bin)
-            inbetween_indices_number_list.append(inbetween_indices_number)
-            print(avg_confidence_value_in_bin, avg_acc_value_in_bin, inbetween_indices_number)
-
-        # calculate ECE
-        confidence_acc_diff = np.abs(np.array(avg_confidence_per_bin) - np.array(avg_acc_per_bin))
-        ece_measure = np.sum(np.array(inbetween_indices_number_list) * confidence_acc_diff) / sum(
-            inbetween_indices_number_list)
+        avg_acc_per_bin, avg_confidence_per_bin, ece_measure = calculate_reliability_and_ece(correct_values_list,
+                                                                                             error_values_list, values)
         print(f"{method_name} ECE:{ece_measure}")
         plt.bar(x=x_centers, height=avg_confidence_per_bin, label=method_name + ' - Confidence', width=width,
                 color='red', alpha=0.4)
@@ -212,13 +198,11 @@ def get_to_plot_values_dict(all_curves: List[Tuple[float, str]], names: List[str
             if plot_type == PlotType.BY_BLOCK:
                 agg_ser = (np.cumsum(ser[0]) / np.arange(1, len(ser[0]) + 1))
                 values_to_plot.extend(agg_ser)
-            elif plot_type == PlotType.BY_SNR:
-                mean_ser = np.mean(ser)
-                values_to_plot.append(mean_ser)
             elif plot_type == PlotType.BY_RELIABILITY:
                 values_to_plot.append(correct_values_list)
                 values_to_plot.append(error_values_list)
             else:
-                raise ValueError("No such plot type!")
+                mean_ser = np.mean(ser)
+                values_to_plot.append(mean_ser)
         values_to_plot_dict[method_name] = values_to_plot
     return cur_name, values_to_plot_dict

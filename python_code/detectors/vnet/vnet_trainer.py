@@ -23,7 +23,6 @@ class VNETTrainer(Trainer):
         self.n_user = 1
         self.n_ant = 1
         self.lr = 5e-3
-        self.temp_lr = 1e-2
         self.probs_vec = None
         super().__init__()
 

@@ -10,7 +10,7 @@ from python_code import DEVICE
 from python_code.channel.channel_dataset import ChannelModelDataset
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
-from python_code.utils.metrics import calculate_ber
+from python_code.utils.metrics import calculate_ber, calculate_reliability_and_ece
 
 conf = Config()
 
@@ -157,8 +157,11 @@ class Trainer(object):
             correct_values_list.extend(correct_values)
             error_values_list.extend(error_values)
             self.init_priors()
-
+        values = np.linspace(start=0, stop=1, num=9)
+        avg_acc_per_bin, avg_confidence_per_bin, ece_measure = calculate_reliability_and_ece(correct_values_list,
+                                                                                             error_values_list, values)
         print(f'Final ser: {sum(total_ber) / len(total_ber)}')
+        print(f"ECE:{ece_measure}")
         return total_ber, correct_values_list, error_values_list
 
     def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor, phase: Phase = None) -> float:

@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 from python_code import DEVICE
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, HALF
 from python_code.utils.trellis_utils import create_transition_table, acs_block
 
 LossVariable = collections.namedtuple('LossVariable', 'priors arm_original arm_tilde u_list kl_term')
@@ -44,7 +44,7 @@ class BayesianDNN(nn.Module):
         self.fc1 = nn.Linear(1, HIDDEN1_SIZE).to(DEVICE)
         self.fc2 = nn.Linear(HIDDEN1_SIZE, n_states).to(DEVICE)
         self.dropout_logit = nn.Parameter(torch.rand(HIDDEN1_SIZE).reshape(1, -1))
-        # self.T = 1 # nn.Parameter(torch.ones(1))
+        self.T = HALF
         self.activation = nn.ReLU().to(DEVICE)
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
@@ -77,7 +77,7 @@ class BayesianDNN(nn.Module):
                 out_tilde = self.fc2(x_tilde)
                 arm_tilde.append(self.log_softmax(out_tilde))
             else:
-                probs += self.softmax(out.clone().detach())  # /self.T
+                probs += self.softmax(out.clone().detach() / self.T)  # /self.T
 
         if phase == Phase.TRAIN:
             log_probs /= num_ensemble

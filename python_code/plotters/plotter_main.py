@@ -18,7 +18,7 @@ if __name__ == '__main__':
             print(params_dict)
             compute_for_method(all_curves, method, params_dict, run_params_obj)
 
-    if plot_type == PlotType.BY_BLOCK or plot_type == PlotType.BY_SNR:
-        plot_by_values(all_curves, values, xlabel, ylabel, plot_type)
-    else:
+    if plot_type == PlotType.BY_RELIABILITY:
         plot_by_reliability_values(all_curves, values, xlabel, ylabel, plot_type)
+    else:
+        plot_by_values(all_curves, values, xlabel, ylabel, plot_type)

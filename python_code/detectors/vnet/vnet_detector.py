@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from python_code import DEVICE
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, HALF
 from python_code.utils.trellis_utils import create_transition_table, acs_block
 
 HIDDEN1_SIZE = 100
@@ -21,8 +21,8 @@ class VNETDetector(nn.Module):
         self.n_states = n_states
         self.transition_table_array = create_transition_table(n_states)
         self.transition_table = torch.Tensor(self.transition_table_array).to(DEVICE)
+        self.T = HALF
         self._initialize_dnn()
-        # self.T = 2  # nn.Parameter(torch.ones(1))
 
     def _initialize_dnn(self):
         layers = [nn.Linear(1, HIDDEN1_SIZE),
@@ -40,7 +40,7 @@ class VNETDetector(nn.Module):
             priors = func(self.net(rx))
         else:
             func = torch.nn.Softmax(dim=1)
-            probs = func(self.net(rx).clone().detach())
+            probs = func(self.net(rx).clone().detach() / self.T)
             confident_bits = (torch.argmax(probs, dim=1) % 2).reshape(-1, 1)
             confidence_word = torch.amax(probs, dim=1).reshape(-1, 1)
             priors = torch.log(probs)
