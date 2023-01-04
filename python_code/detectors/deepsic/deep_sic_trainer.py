@@ -43,9 +43,6 @@ class DeepSICTrainer(Trainer):
     def __str__(self):
         return 'DeepSIC'
 
-    def init_priors(self):
-        self.probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
-
     def _initialize_detector(self):
         self.detector = [[DeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
                          range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
@@ -101,8 +98,9 @@ class DeepSICTrainer(Trainer):
             # Training the DeepSIC networks for the iteration>1
             self.train_models(self.detector, i, tx_all, rx_all)
 
-    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None, h: torch.Tensor = None) -> torch.Tensor:
+    def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
+        probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
         for i in range(ITERATIONS):
             probs_vec = self.calculate_posteriors(self.detector, i + 1, probs_vec, rx)
         detected_word = BPSKModulator.demodulate(prob_to_BPSK_symbol(probs_vec.float()))

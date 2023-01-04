@@ -7,7 +7,6 @@ from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.channel.modulator import BPSKModulator
 from python_code.detectors.bayesian_deepsic.bayesian_deep_sic_detector import BayesianDeepSICDetector, LossVariable
-from python_code.detectors.deepsic.deep_sic_detector import DeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF, Phase
@@ -39,17 +38,14 @@ class BayesianDeepSICTrainer(Trainer):
         self.n_user = N_USER
         self.n_ant = N_ANT
         self.lr = 5e-3
-        self.ensemble_num = 5
+        self.ensemble_num = 3
         self.kl_scale = 5
-        self.kl_beta = 1e-3
-        self.arm_beta = 2
+        self.kl_beta = 5e-4
+        self.arm_beta = 1
         super().__init__()
 
     def __str__(self):
         return 'BayesianDeepSIC'
-
-    def init_priors(self):
-        self.probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
 
     def _initialize_detector(self):
         self.detector = [
@@ -94,7 +90,7 @@ class BayesianDeepSICTrainer(Trainer):
             current_loss = self.run_train_loop(soft_estimation, tx)
             loss += current_loss
 
-    def train_models(self, model: List[List[DeepSICDetector]], i: int, tx_all: List[torch.Tensor],
+    def train_models(self, model: List[List[BayesianDeepSICDetector]], i: int, tx_all: List[torch.Tensor],
                      rx_all: List[torch.Tensor]):
         for user in range(self.n_user):
             self.train_model(model[user][i], tx_all[user], rx_all[user])
@@ -115,16 +111,17 @@ class BayesianDeepSICTrainer(Trainer):
         # Training the DeepSICNet for each user-symbol/iteration
         for i in range(1, ITERATIONS):
             # Generating soft symbols for training purposes
-            probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
+            probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx, phase=Phase.TRAIN)
             # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
             tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
             # Training the DeepSIC networks for the iteration>1
             self.train_models(self.detector, i, tx_all, rx_all)
 
-    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None, h: torch.Tensor = None) -> torch.Tensor:
+    def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
-        for i in range(ITERATIONS):
-            probs_vec = self.calculate_posteriors(self.detector, i + 1, probs_vec, rx)
+        probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
+        for i in range(1, ITERATIONS):
+            probs_vec = self.calculate_posteriors(self.detector, i + 1, probs_vec, rx, phase=Phase.TEST)
         detected_word = BPSKModulator.demodulate(prob_to_BPSK_symbol(probs_vec.float()))
         new_probs_vec = torch.cat([probs_vec.unsqueeze(dim=2), (1 - probs_vec).unsqueeze(dim=2)], dim=2)
         confident_bits = 1 - torch.argmax(new_probs_vec, dim=2)
@@ -146,7 +143,7 @@ class BayesianDeepSICTrainer(Trainer):
         return tx_all, rx_all
 
     def calculate_posteriors(self, model: List[List[nn.Module]], i: int, probs_vec: torch.Tensor,
-                             rx: torch.Tensor) -> torch.Tensor:
+                             rx: torch.Tensor, phase: Phase) -> torch.Tensor:
         """
         Propagates the probabilities through the learnt networks.
         """
@@ -156,6 +153,6 @@ class BayesianDeepSICTrainer(Trainer):
             input = torch.cat((rx, probs_vec[:, idx].reshape(rx.shape[0], -1)), dim=1)
             preprocessed_input = self.preprocess(input)
             with torch.no_grad():
-                output = self.softmax(model[user][i - 1](preprocessed_input, Phase.TEST).priors)
+                output = self.softmax(model[user][i - 1](preprocessed_input, phase).priors)
             next_probs_vec[:, user] = output[:, 1:].reshape(next_probs_vec[:, user].shape)
         return next_probs_vec

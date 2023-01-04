@@ -9,7 +9,6 @@ from torch.optim import RMSprop, Adam, SGD
 from python_code import DEVICE
 from python_code.channel.channel_dataset import ChannelModelDataset
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
 from python_code.utils.metrics import calculate_ber, calculate_reliability_and_ece
 
 conf = Config()
@@ -110,16 +109,9 @@ class Trainer(object):
         """
         pass
 
-    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None, h: np.ndarray = None) -> Tuple[
-        torch.Tensor, torch.Tensor]:
+    def forward(self, rx: torch.Tensor, h: np.ndarray = None) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Every trainer must have some forward pass for its detector
-        """
-        pass
-
-    def init_priors(self):
-        """
-        DeepSIC employs this initialization
         """
         pass
 
@@ -133,8 +125,6 @@ class Trainer(object):
         correct_values_list, error_values_list = [], []
         # draw words for a given snr
         transmitted_words, received_words, hs = self.channel_dataset.__getitem__(snr_list=[conf.snr])
-        # either None or in case of DeepSIC intializes the priors
-        self.init_priors()
         # detect sequentially
         for block_ind in range(conf.blocks_num):
             print('*' * 20)
@@ -147,7 +137,7 @@ class Trainer(object):
                 # re-train the detector
                 self._online_training(tx_pilot, rx_pilot)
             # detect data part after training on the pilot part
-            detected_word, (confident_bits, confidence_word) = self.forward(rx_data, self.probs_vec, h)
+            detected_word, (confident_bits, confidence_word) = self.forward(rx_data, h)
             # calculate accuracy
             ber = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])  #
             correct_values = confidence_word[torch.eq(tx_data[:, :rx.shape[1]], confident_bits)].tolist()
@@ -156,7 +146,6 @@ class Trainer(object):
             total_ber.append(ber)
             correct_values_list.extend(correct_values)
             error_values_list.extend(error_values)
-            self.init_priors()
         values = np.linspace(start=0, stop=1, num=9)
         avg_acc_per_bin, avg_confidence_per_bin, ece_measure = calculate_reliability_and_ece(correct_values_list,
                                                                                              error_values_list, values)

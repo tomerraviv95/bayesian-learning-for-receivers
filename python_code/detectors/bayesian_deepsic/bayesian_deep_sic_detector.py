@@ -57,7 +57,7 @@ class BayesianDeepSICDetector(nn.Module):
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
         self.fc1 = nn.Linear(linear_input, hidden_size)
-        self.relu1 = nn.Sigmoid()
+        self.activation = nn.ReLU()
         self.fc2 = nn.Linear(hidden_size, classes_num)
         self.num_ensemble = ensemble_num
         self.kl_scale = kl_scale
@@ -76,7 +76,7 @@ class BayesianDeepSICDetector(nn.Module):
 
         for ind_ensemble in range(self.num_ensemble):
             # first layer
-            x = self.relu1(self.fc1(rx))
+            x = self.activation(self.fc1(rx))
             u = torch.rand(x.shape).to(DEVICE)
             x_after_dropout = dropout_ori(x, self.dropout_logit, u)
             # second layer

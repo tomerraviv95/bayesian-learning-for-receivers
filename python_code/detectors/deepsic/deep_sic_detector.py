@@ -35,10 +35,11 @@ class DeepSICDetector(nn.Module):
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
         self.fc1 = nn.Linear(linear_input, hidden_size)
-        self.relu1 = nn.Sigmoid()
+        self.activation = nn.Sigmoid()
         self.fc2 = nn.Linear(hidden_size, classes_num)
+        self.log_softmax = torch.nn.LogSoftmax(dim=1)
 
     def forward(self, rx: torch.Tensor) -> torch.Tensor:
-        out0 = self.relu1(self.fc1(rx))
+        out0 = self.activation(self.fc1(rx))
         out1 = self.fc2(out0)
-        return out1
+        return self.log_softmax(out1)
