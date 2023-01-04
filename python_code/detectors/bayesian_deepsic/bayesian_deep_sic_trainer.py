@@ -6,10 +6,11 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.channel.modulator import BPSKModulator
+from python_code.detectors.bayesian_deepsic.bayesian_deep_sic_detector import BayesianDeepSICDetector, LossVariable
 from python_code.detectors.deepsic.deep_sic_detector import DeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import HALF
+from python_code.utils.constants import HALF, Phase
 
 conf = Config()
 ITERATIONS = 3
@@ -26,7 +27,7 @@ def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
     return torch.sign(p - HALF)
 
 
-class DeepSICTrainer(Trainer):
+class BayesianDeepSICTrainer(Trainer):
     """Form the trainer class.
 
     Keyword arguments:
@@ -38,23 +39,42 @@ class DeepSICTrainer(Trainer):
         self.n_user = N_USER
         self.n_ant = N_ANT
         self.lr = 5e-3
+        self.ensemble_num = 5
+        self.kl_scale = 5
+        self.kl_beta = 1e-3
+        self.arm_beta = 2
         super().__init__()
 
     def __str__(self):
-        return 'DeepSIC'
+        return 'BayesianDeepSIC'
 
     def init_priors(self):
         self.probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
 
     def _initialize_detector(self):
-        self.detector = [[DeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
-                         range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
+        self.detector = [
+            [BayesianDeepSICDetector(self.ensemble_num, self.kl_scale).to(DEVICE) for _ in range(ITERATIONS)] for _ in
+            range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
 
-    def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor) -> torch.Tensor:
+    def calc_loss(self, est: LossVariable, tx: torch.IntTensor) -> torch.Tensor:
         """
         Cross Entropy loss - distribution over states versus the gt state label
         """
-        return self.criterion(input=est, target=tx.long())
+        data_fitting_loss_term = self.criterion(input=est.priors, target=tx.long())
+        loss = data_fitting_loss_term
+        # ARM Loss
+        arm_loss = 0
+        for i in range(self.ensemble_num):
+            loss_term_arm_original = self.criterion(input=est.arm_original[i], target=tx.long())
+            loss_term_arm_tilde = self.criterion(input=est.arm_tilde[i], target=tx.long())
+            arm_delta = (loss_term_arm_tilde - loss_term_arm_original)
+            grad_logit = arm_delta * (est.u_list[i] - HALF)
+            arm_loss += torch.matmul(grad_logit, est.dropout_logit.T)
+        arm_loss = torch.mean(arm_loss)
+        # KL Loss
+        kl_term = self.kl_beta * est.kl_term
+        loss += self.arm_beta * arm_loss + kl_term
+        return loss
 
     @staticmethod
     def preprocess(rx: torch.Tensor) -> torch.Tensor:
@@ -69,8 +89,8 @@ class DeepSICTrainer(Trainer):
         single_model = single_model.to(DEVICE)
         loss = 0
         y_total = self.preprocess(rx)
-        for _ in range(EPOCHS):
-            soft_estimation = single_model(y_total)
+        for e in range(EPOCHS):
+            soft_estimation = single_model(y_total, phase=Phase.TRAIN)
             current_loss = self.run_train_loop(soft_estimation, tx)
             loss += current_loss
 
@@ -136,6 +156,6 @@ class DeepSICTrainer(Trainer):
             input = torch.cat((rx, probs_vec[:, idx].reshape(rx.shape[0], -1)), dim=1)
             preprocessed_input = self.preprocess(input)
             with torch.no_grad():
-                output = self.softmax(model[user][i - 1](preprocessed_input))
+                output = self.softmax(model[user][i - 1](preprocessed_input, Phase.TEST).priors)
             next_probs_vec[:, user] = output[:, 1:].reshape(next_probs_vec[:, user].shape)
         return next_probs_vec

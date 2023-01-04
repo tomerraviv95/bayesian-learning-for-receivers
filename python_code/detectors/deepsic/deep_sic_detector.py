@@ -7,7 +7,7 @@ from python_code.utils.config_singleton import Config
 
 conf = Config()
 
-HIDDEN_BASE_SIZE = 32
+HIDDEN_BASE_SIZE = 64
 
 
 class DeepSICDetector(nn.Module):
@@ -34,14 +34,11 @@ class DeepSICDetector(nn.Module):
         classes_num = BPSKModulator.constellation_size
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
-        self.fc0 = nn.Linear(linear_input, hidden_size)
+        self.fc1 = nn.Linear(linear_input, hidden_size)
         self.relu1 = nn.Sigmoid()
-        self.fc1 = nn.Linear(hidden_size, int(hidden_size / 2))
-        self.relu2 = nn.ReLU()
-        self.fc2 = nn.Linear(int(hidden_size / 2), classes_num)
+        self.fc2 = nn.Linear(hidden_size, classes_num)
 
     def forward(self, rx: torch.Tensor) -> torch.Tensor:
-        out0 = self.relu1(self.fc0(rx))
-        fc1_out = self.relu2(self.fc1(out0))
-        out = self.fc2(fc1_out)
-        return out
+        out0 = self.relu1(self.fc1(rx))
+        out1 = self.fc2(out0)
+        return out1

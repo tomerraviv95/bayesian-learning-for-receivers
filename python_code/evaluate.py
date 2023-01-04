@@ -1,5 +1,6 @@
 import os
 
+from python_code.detectors.bayesian_deepsic.bayesian_deep_sic_trainer import BayesianDeepSICTrainer
 from python_code.detectors.bayesian_vnet.bayesian_vnet_trainer import BayesianVNETTrainer
 from python_code.detectors.deepsic.deep_sic_trainer import DeepSICTrainer
 from python_code.detectors.dnn.dnn_trainer import DNNTrainer
@@ -20,7 +21,8 @@ CHANNEL_TYPE_TO_TRAINER_DICT = {ChannelModes.SISO.name:
                                      DetectorType.maximum_likelihood.name: VATrainer},
                                 ChannelModes.MIMO.name:
                                     {DetectorType.model.name: DeepSICTrainer,
-                                     DetectorType.black_box.name: DNNTrainer},
+                                     DetectorType.black_box.name: DNNTrainer,
+                                     DetectorType.bayesian.name: BayesianDeepSICTrainer},
                                 }
 
 if __name__ == '__main__':

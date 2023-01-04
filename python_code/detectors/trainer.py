@@ -43,7 +43,7 @@ class Trainer(object):
         self.detector = None
 
     # calculate train loss
-    def calc_loss(self, est: torch.Tensor, tx: torch.Tensor, phase: Phase) -> torch.Tensor:
+    def calc_loss(self, est: torch.Tensor, tx: torch.Tensor) -> torch.Tensor:
         """
          Every trainer must have some loss calculation
         """
@@ -164,11 +164,9 @@ class Trainer(object):
         print(f"ECE:{ece_measure}")
         return total_ber, correct_values_list, error_values_list
 
-    def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor, phase: Phase = None) -> float:
-        if phase is None:
-            raise ValueError("Phase is None in training loop, needs to be either train or val")
+    def run_train_loop(self, est: torch.Tensor, tx: torch.Tensor) -> float:
         # calculate loss
-        loss = self.calc_loss(est=est, tx=tx, phase=phase)
+        loss = self.calc_loss(est=est, tx=tx)
         current_loss = loss.item()
         # back propagation
         self.optimizer.zero_grad()

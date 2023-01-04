@@ -35,7 +35,7 @@ class VNETTrainer(Trainer):
         """
         self.detector = VNETDetector(n_states=self.n_states)
 
-    def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor, phase: Phase) -> torch.Tensor:
+    def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor) -> torch.Tensor:
         """
         Cross Entropy loss - distribution over states versus the gt state label
         :param est: [1,transmission_length,n_states], each element is a probability
@@ -68,5 +68,5 @@ class VNETTrainer(Trainer):
         for i in range(EPOCHS):
             # pass through detector
             soft_estimation = self.detector(rx.float(), phase=Phase.TRAIN)
-            current_loss = self.run_train_loop(est=soft_estimation, tx=tx, phase=Phase.TRAIN)
+            current_loss = self.run_train_loop(est=soft_estimation, tx=tx)
             loss += current_loss
