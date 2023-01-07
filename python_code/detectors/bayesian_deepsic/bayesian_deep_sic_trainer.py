@@ -6,13 +6,13 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.channel.modulator import BPSKModulator
-from python_code.detectors.bayesian_deepsic.bayesian_deep_sic_detector import BayesianDeepSICDetector, LossVariable
+from python_code.detectors.bayesian_deepsic.bayesian_deep_sic_detector import LossVariable, BayesianDeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF, Phase
 
 conf = Config()
-ITERATIONS = 3
+ITERATIONS = 2
 EPOCHS = 250
 
 
@@ -38,7 +38,7 @@ class BayesianDeepSICTrainer(Trainer):
         self.n_user = N_USER
         self.n_ant = N_ANT
         self.lr = 5e-3
-        self.ensemble_num = 3
+        self.ensemble_num = 5
         self.kl_scale = 5
         self.kl_beta = 5e-4
         self.arm_beta = 1
@@ -56,8 +56,7 @@ class BayesianDeepSICTrainer(Trainer):
         """
         Cross Entropy loss - distribution over states versus the gt state label
         """
-        data_fitting_loss_term = self.criterion(input=est.priors, target=tx.long())
-        loss = data_fitting_loss_term
+        loss = self.criterion(input=est.priors, target=tx.long())
         # ARM Loss
         arm_loss = 0
         for i in range(self.ensemble_num):
@@ -85,7 +84,7 @@ class BayesianDeepSICTrainer(Trainer):
         single_model = single_model.to(DEVICE)
         loss = 0
         y_total = self.preprocess(rx)
-        for e in range(EPOCHS):
+        for _ in range(EPOCHS):
             soft_estimation = single_model(y_total, phase=Phase.TRAIN)
             current_loss = self.run_train_loop(soft_estimation, tx)
             loss += current_loss
@@ -111,7 +110,7 @@ class BayesianDeepSICTrainer(Trainer):
         # Training the DeepSICNet for each user-symbol/iteration
         for i in range(1, ITERATIONS):
             # Generating soft symbols for training purposes
-            probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx, phase=Phase.TRAIN)
+            probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx, Phase.TRAIN)
             # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
             tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
             # Training the DeepSIC networks for the iteration>1
@@ -120,7 +119,7 @@ class BayesianDeepSICTrainer(Trainer):
     def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
         probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
-        for i in range(1, ITERATIONS):
+        for i in range(ITERATIONS):
             probs_vec = self.calculate_posteriors(self.detector, i + 1, probs_vec, rx, phase=Phase.TEST)
         detected_word = BPSKModulator.demodulate(prob_to_BPSK_symbol(probs_vec.float()))
         new_probs_vec = torch.cat([probs_vec.unsqueeze(dim=2), (1 - probs_vec).unsqueeze(dim=2)], dim=2)

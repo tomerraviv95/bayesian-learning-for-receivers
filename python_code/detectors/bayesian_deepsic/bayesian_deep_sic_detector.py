@@ -11,7 +11,7 @@ from python_code.utils.constants import Phase
 
 conf = Config()
 
-HIDDEN_BASE_SIZE = 64
+HIDDEN_BASE_SIZE = 256
 
 LossVariable = collections.namedtuple('LossVariable', 'priors arm_original arm_tilde u_list kl_term dropout_logit')
 
@@ -57,21 +57,17 @@ class BayesianDeepSICDetector(nn.Module):
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
         self.fc1 = nn.Linear(linear_input, hidden_size)
-        self.activation = nn.ReLU()
+        self.activation = nn.Sigmoid()
         self.fc2 = nn.Linear(hidden_size, classes_num)
         self.num_ensemble = ensemble_num
         self.kl_scale = kl_scale
         self.dropout_logit = nn.Parameter(torch.rand(hidden_size).reshape(1, -1))
-        self.softmax = nn.Softmax(dim=1)
         self.log_softmax = nn.LogSoftmax(dim=1)
+        self.softmax = nn.Softmax(dim=1)
         self.T = 1
 
     def forward(self, rx: torch.Tensor, phase: Phase) -> torch.Tensor:
-        if phase == Phase.TRAIN:
-            log_probs = 0
-        else:
-            log_probs = 0
-            probs = 0
+        log_probs = 0
         arm_original, arm_tilde, u_list, kl_term = [], [], [], 0
 
         for ind_ensemble in range(self.num_ensemble):
@@ -92,12 +88,9 @@ class BayesianDeepSICDetector(nn.Module):
                 out_tilde = self.fc2(x_tilde)
                 arm_tilde.append(self.log_softmax(out_tilde))
             else:
-                probs += self.softmax(out.clone().detach() / self.T)
+                log_probs += self.log_softmax(out / self.T)
 
-        if phase == Phase.TRAIN:
-            log_probs /= self.num_ensemble
-        else:
-            log_probs = torch.log(probs / self.num_ensemble)
+        log_probs /= self.num_ensemble
 
         # add KL term if training
         if phase == Phase.TRAIN:

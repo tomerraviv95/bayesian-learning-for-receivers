@@ -12,7 +12,7 @@ from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF
 
 conf = Config()
-ITERATIONS = 3
+ITERATIONS = 2
 EPOCHS = 250
 
 
