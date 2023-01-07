@@ -12,7 +12,7 @@ snr: 10 # validation SNR value. values: float.
 
 # protocol
 block_length: 5100 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 50 # pilot bits
+pilot_size: 100 # pilot bits
 blocks_num: 10 # number of validation frames. values: int.
 
 # online training hyperparameters

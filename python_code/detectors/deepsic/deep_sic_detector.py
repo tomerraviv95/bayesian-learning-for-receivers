@@ -7,7 +7,7 @@ from python_code.utils.config_singleton import Config
 
 conf = Config()
 
-HIDDEN_BASE_SIZE = 64
+HIDDEN_BASE_SIZE = 32
 
 
 class DeepSICDetector(nn.Module):
