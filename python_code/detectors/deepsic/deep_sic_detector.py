@@ -7,7 +7,7 @@ from python_code.utils.config_singleton import Config
 
 conf = Config()
 
-HIDDEN_BASE_SIZE = 32
+HIDDEN_BASE_SIZE = 128
 
 
 class DeepSICDetector(nn.Module):
@@ -35,7 +35,7 @@ class DeepSICDetector(nn.Module):
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
         self.fc1 = nn.Linear(linear_input, hidden_size)
-        self.activation = nn.Sigmoid()
+        self.activation = nn.ReLU()
         self.fc2 = nn.Linear(hidden_size, classes_num)
         self.log_softmax = torch.nn.LogSoftmax(dim=1)
 

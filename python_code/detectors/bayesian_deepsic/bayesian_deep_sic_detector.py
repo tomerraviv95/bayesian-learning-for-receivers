@@ -11,7 +11,7 @@ from python_code.utils.constants import Phase
 
 conf = Config()
 
-HIDDEN_BASE_SIZE = 32
+HIDDEN_BASE_SIZE = 128
 
 LossVariable = collections.namedtuple('LossVariable', 'priors arm_original arm_tilde u_list kl_term dropout_logit')
 
@@ -57,7 +57,7 @@ class BayesianDeepSICDetector(nn.Module):
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
         self.fc1 = nn.Linear(linear_input, hidden_size)
-        self.activation = nn.Sigmoid()
+        self.activation = nn.ReLU()
         self.fc2 = nn.Linear(hidden_size, classes_num)
         self.num_ensemble = ensemble_num
         self.kl_scale = kl_scale

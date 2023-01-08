@@ -35,12 +35,10 @@ MARKER_EVERY = 5
 def get_linestyle(method_name: str) -> str:
     if 'Bayesian' in method_name:
         return 'solid'
-    elif 'ViterbiNet' in method_name:
+    elif 'DeepSIC' in method_name or 'ViterbiNet' in method_name:
         return 'dashed'
     elif 'Viterbi' in method_name:
         return 'dotted'
-    elif 'RNN' in method_name or 'DNN' in method_name:
-        return 'dashed'
     else:
         raise ValueError('No such detector!!!')
 
@@ -48,7 +46,7 @@ def get_linestyle(method_name: str) -> str:
 def get_marker(method_name: str) -> str:
     if 'Bayesian' in method_name:
         return 'o'
-    elif 'ViterbiNet' in method_name:
+    elif 'DeepSIC' in method_name or 'ViterbiNet' in method_name:
         return 'X'
     elif 'Viterbi' in method_name:
         return 's'
@@ -59,7 +57,7 @@ def get_marker(method_name: str) -> str:
 def get_color(method_name: str) -> str:
     if 'Bayesian' in method_name:
         return 'blue'
-    elif 'ViterbiNet' in method_name:
+    elif 'DeepSIC' in method_name or 'ViterbiNet' in method_name:
         return 'black'
     elif 'Viterbi' in method_name:
         return 'red'
@@ -94,7 +92,7 @@ def get_all_plots(dec: Trainer, run_over: bool, method_name: str, trial=None):
 
 
 def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values: List[float], xlabel: str,
-                   ylabel: str, plot_type: str):
+                   ylabel: str, plot_type: PlotType):
     # path for the saved figure
     current_day_time = datetime.datetime.now()
     folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'
@@ -109,17 +107,13 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
             names.append(all_curves[i][0])
 
     cur_name, sers_dict = get_to_plot_values_dict(all_curves, names, plot_type)
-    if plot_type == PlotType.BY_BLOCK:
-        MARKER_EVERY = 10
-        x_ticks = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
-        x_labels = [1].extend(values[MARKER_EVERY - 1::MARKER_EVERY])
-    else:
-        MARKER_EVERY = 1
-        x_ticks = values
-        x_labels = values
+    MARKER_EVERY = 1
+    x_ticks = values
+    x_labels = values
 
     # plots all methods
     for method_name in names:
+        print(method_name)
         plt.plot(values, sers_dict[method_name], label=method_name,
                  color=get_color(method_name),
                  marker=get_marker(method_name), markersize=11,
@@ -133,13 +127,13 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
     plt.legend(loc='lower left', prop={'size': 15})
     plt.yscale('log')
     trainer_name = cur_name.split(' ')[0]
-    plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'coded_ber_versus_snrs_{trainer_name}.png'),
+    plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'ser_versus_snrs_{trainer_name}.png'),
                 bbox_inches='tight')
     plt.show()
 
 
 def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values: List[float], xlabel: str,
-                               ylabel: str, plot_type: str):
+                               ylabel: str, plot_type: PlotType):
     # path for the saved figure
     current_day_time = datetime.datetime.now()
     folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'
@@ -195,10 +189,8 @@ def get_to_plot_values_dict(all_curves: List[Tuple[float, str]], names: List[str
         for cur_name, ser, correct_values_list, error_values_list in all_curves:
             if cur_name != method_name:
                 continue
-            if plot_type == PlotType.BY_BLOCK:
-                agg_ser = (np.cumsum(ser[0]) / np.arange(1, len(ser[0]) + 1))
-                values_to_plot.extend(agg_ser)
-            elif plot_type == PlotType.BY_RELIABILITY or plot_type == PlotType.BY_RELIABILITY_NON_LINEAR:
+            if plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_LINEAR or \
+                    plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_NON_LINEAR:
                 values_to_plot.append(correct_values_list)
                 values_to_plot.append(error_values_list)
             else:

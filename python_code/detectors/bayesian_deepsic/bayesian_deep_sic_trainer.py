@@ -40,7 +40,7 @@ class BayesianDeepSICTrainer(Trainer):
         self.lr = 5e-3
         self.ensemble_num = 5
         self.kl_scale = 5
-        self.kl_beta = 5e-4
+        self.kl_beta = 1e-2
         self.arm_beta = 1
         super().__init__()
 

@@ -32,7 +32,7 @@ class VATrainer(Trainer):
         """
         self.detector = VADetector(n_states=self.n_states, memory_length=self.memory_length)
 
-    def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None, h: torch.Tensor = None) -> torch.Tensor:
+    def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
         detected_word = self.detector(rx.float(), phase=Phase.TEST, h=h)
         return detected_word
