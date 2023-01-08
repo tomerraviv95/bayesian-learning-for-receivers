@@ -11,7 +11,7 @@ fading_in_channel: False # If the channel is fading/non-fading. values: [True, F
 snr: 10 # validation SNR value. values: float.
 
 # protocol
-block_length: 5100 # coherence block time, total size of pilot + data. values: int.
+block_length: 10100 # coherence block time, total size of pilot + data. values: int.
 pilot_size: 100 # pilot bits
 blocks_num: 50 # number of validation frames. values: int.
 

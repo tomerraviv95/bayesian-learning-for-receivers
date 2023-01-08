@@ -11,8 +11,10 @@ class PlotType(Enum):
     SISO_BY_SNR_STATIC_NON_LINEAR = 'SISO_BY_SNR_STATIC_NON_LINEAR'
     SISO_BY_RELIABILITY_STATIC_LINEAR = 'SISO_BY_RELIABILITY_STATIC_LINEAR'
     SISO_BY_RELIABILITY_STATIC_NON_LINEAR = 'SISO_BY_RELIABILITY_STATIC_NON_LINEAR'
-    BY_SNR_FADING_LINEAR = 'BY_SNR_FADING_LINEAR'
-    BY_SNR_FADING_NON_LINEAR = 'BY_SNR_FADING_NON_LINEAR'
+    MIMO_BY_SNR_STATIC_LINEAR = 'MIMO_BY_SNR_STATIC_LINEAR'
+    MIMO_BY_SNR_STATIC_NON_LINEAR = 'MIMO_BY_SNR_STATIC_NON_LINEAR'
+    MIMO_BY_RELIABILITY_STATIC_LINEAR = 'MIMO_BY_RELIABILITY_STATIC_LINEAR'
+    MIMO_BY_RELIABILITY_STATIC_NON_LINEAR = 'MIMO_BY_RELIABILITY_STATIC_NON_LINEAR'
 
 
 def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
@@ -104,62 +106,74 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         ]
         values = np.linspace(start=0, stop=1, num=9)
         xlabel, ylabel = 'Reliability', 'Metric'
-    elif plot_type == PlotType.BY_SNR_FADING_LINEAR:
+    elif plot_type == PlotType.MIMO_BY_SNR_STATIC_LINEAR:
         params_dicts = [
-            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True},
-            {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True}
+            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name},
         ]
         methods_list = [
             'Regular'
         ]
         values = list(range(9, 14))
         xlabel, ylabel = 'SNR', 'BER'
-    elif plot_type == PlotType.BY_SNR_FADING_NON_LINEAR:
+    elif plot_type == PlotType.MIMO_BY_SNR_STATIC_NON_LINEAR:
         params_dicts = [
             {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False},
+             'linear': False},
             {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'fading': True, 'linear': False}
+             'linear': False},
         ]
         methods_list = [
             'Regular'
         ]
         values = list(range(9, 14))
         xlabel, ylabel = 'SNR', 'BER'
+    elif plot_type == PlotType.MIMO_BY_RELIABILITY_STATIC_LINEAR:
+        params_dicts = [
+            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name},
+        ]
+        methods_list = [
+            'Regular'
+        ]
+        values = np.linspace(start=0, stop=1, num=9)
+        xlabel, ylabel = 'Reliability', 'Metric'
+    elif plot_type == PlotType.MIMO_BY_RELIABILITY_STATIC_NON_LINEAR:
+        params_dicts = [
+            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+             'linear': False},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'linear': False},
+        ]
+        methods_list = [
+            'Regular'
+        ]
+        values = np.linspace(start=0, stop=1, num=9)
+        xlabel, ylabel = 'Reliability', 'Metric'
     else:
         raise ValueError('No such plot type!!!')
 

@@ -4,10 +4,10 @@ from python_code.plotters.plotter_utils import plot_by_values, plot_by_reliabili
 
 if __name__ == '__main__':
     run_over = False  # whether to run over previous results
-    trial_num = 1  # number of trials per point estimate, used to reduce noise by averaging results of multiple runs
+    trial_num = 3  # number of trials per point estimate, used to reduce noise by averaging results of multiple runs
     run_params_obj = RunParams(run_over=run_over,
                                trial_num=trial_num)
-    plot_type = PlotType.SISO_BY_RELIABILITY_STATIC_NON_LINEAR
+    plot_type = PlotType.MIMO_BY_SNR_STATIC_NON_LINEAR
     print(plot_type.name)
     params_dicts, methods_list, values, xlabel, ylabel = get_config(plot_type)
     all_curves = []
@@ -19,7 +19,9 @@ if __name__ == '__main__':
             compute_for_method(all_curves, method, params_dict, run_params_obj)
 
     if plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_LINEAR or \
-            plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_NON_LINEAR:
+            plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_NON_LINEAR or \
+            plot_type == PlotType.MIMO_BY_RELIABILITY_STATIC_LINEAR or \
+            plot_type == PlotType.MIMO_BY_RELIABILITY_STATIC_NON_LINEAR:
         plot_by_reliability_values(all_curves, values, xlabel, ylabel, plot_type)
     else:
         plot_by_values(all_curves, values, xlabel, ylabel, plot_type)

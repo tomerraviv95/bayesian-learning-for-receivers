@@ -190,7 +190,9 @@ def get_to_plot_values_dict(all_curves: List[Tuple[float, str]], names: List[str
             if cur_name != method_name:
                 continue
             if plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_LINEAR or \
-                    plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_NON_LINEAR:
+                    plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_NON_LINEAR or \
+                    plot_type == PlotType.MIMO_BY_RELIABILITY_STATIC_LINEAR or \
+                    plot_type == PlotType.MIMO_BY_RELIABILITY_STATIC_NON_LINEAR:
                 values_to_plot.append(correct_values_list)
                 values_to_plot.append(error_values_list)
             else:
