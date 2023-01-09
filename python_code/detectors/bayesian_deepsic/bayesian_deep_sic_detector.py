@@ -11,7 +11,7 @@ from python_code.utils.constants import Phase
 
 conf = Config()
 
-HIDDEN_BASE_SIZE = 128
+HIDDEN_BASE_SIZE = 64
 
 LossVariable = collections.namedtuple('LossVariable', 'priors arm_original arm_tilde u_list kl_term dropout_logit')
 

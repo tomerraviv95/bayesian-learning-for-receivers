@@ -101,7 +101,6 @@ class Trainer(object):
         self.channel_dataset = ChannelModelDataset(block_length=conf.block_length,
                                                    pilots_length=conf.pilot_size,
                                                    blocks_num=conf.blocks_num)
-        self.dataloader = torch.utils.data.DataLoader(self.channel_dataset)
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
         """
