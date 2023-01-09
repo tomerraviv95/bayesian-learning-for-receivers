@@ -1,14 +1,14 @@
 # general
 run_name: 'test' # the name of the experiment
-seed: 0 # run seed
+seed: 5 # run seed
 
 # channel
-channel_type: 'MIMO' # Channel type values: ['SISO','MIMO'].
+channel_type: 'SISO' # Channel type values: ['SISO','MIMO'].
 channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
-detector_type: 'bayesian' # 'model' or 'black_box' or 'bayesian' or 'maximum_likelihood'
+detector_type: 'maximum_likelihood' # 'model' or 'black_box' or 'bayesian' or 'maximum_likelihood'
 linear: True # channel linearity. Boolean value.
 fading_in_channel: False # If the channel is fading/non-fading. values: [True, False]
-snr: 9 # validation SNR value. values: float.
+snr: 12 # validation SNR value. values: float.
 
 # protocol
 block_length: 10100 # coherence block time, total size of pilot + data. values: int.

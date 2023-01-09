@@ -139,13 +139,13 @@ class Trainer(object):
             # detect data part after training on the pilot part
             detected_word, (confident_bits, confidence_word) = self.forward(rx_data, h)
             # calculate accuracy
-            ber = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])  #
+            ber = calculate_ber(detected_word, tx_data[:, :rx.shape[1]])
             correct_values = confidence_word[torch.eq(tx_data[:, :rx.shape[1]], confident_bits)].tolist()
             error_values = confidence_word[~torch.eq(tx_data[:, :rx.shape[1]], confident_bits)].tolist()
             print(f'current: {block_ind, ber}')
             total_ber.append(ber)
-            correct_values_list.extend(correct_values)
-            error_values_list.extend(error_values)
+            correct_values_list.append(correct_values)
+            error_values_list.append(error_values)
         values = np.linspace(start=0, stop=1, num=9)
         avg_acc_per_bin, avg_confidence_per_bin, ece_measure = calculate_reliability_and_ece(correct_values_list,
                                                                                              error_values_list, values)

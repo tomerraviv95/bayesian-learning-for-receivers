@@ -10,7 +10,7 @@ from python_code.utils.trellis_utils import create_transition_table, acs_block
 
 LossVariable = collections.namedtuple('LossVariable', 'priors arm_original arm_tilde u_list kl_term')
 
-HIDDEN1_SIZE = 200
+HIDDEN1_SIZE = 100
 
 
 def entropy(prob):

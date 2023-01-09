@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from python_code.utils.config_singleton import Config
+from itertools import chain
 
 conf = Config()
 
@@ -17,7 +18,8 @@ def calculate_ber(prediction: torch.Tensor, target: torch.Tensor) -> float:
 
 
 def calculate_reliability_and_ece(correct_values_list, error_values_list, values):
-    correct_values_list, error_values_list = np.array(correct_values_list), np.array(error_values_list)
+    correct_values_list = np.array(list(chain.from_iterable(correct_values_list)))
+    error_values_list = np.array(list(chain.from_iterable(error_values_list)))
     avg_confidence_per_bin, avg_acc_per_bin, inbetween_indices_number_list = [], [], []
     for val_j, val_j_plus_1 in zip(values[:-1], values[1:]):
         avg_confidence_value_in_bin, avg_acc_value_in_bin = 0, 0
