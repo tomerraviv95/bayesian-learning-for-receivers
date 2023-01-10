@@ -1,11 +1,10 @@
 import os
 
-from python_code.detectors.bayesian_deepsic.bayesian_deep_sic_trainer import BayesianDeepSICTrainer
 from python_code.detectors.bayesian_vnet.bayesian_vnet_trainer import BayesianVNETTrainer
-from python_code.detectors.deepsic.deep_sic_trainer import DeepSICTrainer
-from python_code.detectors.dnn.dnn_trainer import DNNTrainer
-from python_code.detectors.rnn.rnn_trainer import RNNTrainer
-from python_code.detectors.va.va_trainer import VATrainer
+from python_code.detectors.end_to_end_deepsic.end_to_end_deep_sic_trainer import EndToEndDeepSICTrainer
+from python_code.detectors.model_based_bayesian_deepsic.model_based_bayesian_deep_sic_trainer import \
+    ModelBasedBayesianDeepSICTrainer
+from python_code.detectors.seq_deepsic.seq_deep_sic_trainer import SeqDeepSICTrainer
 from python_code.detectors.vnet.vnet_trainer import VNETTrainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import ChannelModes, DetectorType
@@ -15,14 +14,12 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 conf = Config()
 
 CHANNEL_TYPE_TO_TRAINER_DICT = {ChannelModes.SISO.name:
-                                    {DetectorType.model.name: VNETTrainer,
-                                     DetectorType.black_box.name: RNNTrainer,
-                                     DetectorType.bayesian.name: BayesianVNETTrainer,
-                                     DetectorType.maximum_likelihood.name: VATrainer},
+                                    {DetectorType.seq_model.name: VNETTrainer,
+                                     DetectorType.model_based_bayesian.name: BayesianVNETTrainer},
                                 ChannelModes.MIMO.name:
-                                    {DetectorType.model.name: DeepSICTrainer,
-                                     DetectorType.black_box.name: DNNTrainer,
-                                     DetectorType.bayesian.name: BayesianDeepSICTrainer},
+                                    {DetectorType.seq_model.name: SeqDeepSICTrainer,
+                                     DetectorType.end_to_end_model.name: EndToEndDeepSICTrainer,
+                                     DetectorType.model_based_bayesian.name: ModelBasedBayesianDeepSICTrainer},
                                 }
 
 if __name__ == '__main__':

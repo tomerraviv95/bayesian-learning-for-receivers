@@ -49,5 +49,5 @@ class MIMOChannel:
         elif conf.channel_model == ChannelModels.Cost2100.name:
             h = Cost2100MIMOChannel.calculate_channel(N_ANT, N_USER, index, conf.fading_in_channel)
         else:
-            raise ValueError("No such channel model!!!")
+            raise ValueError("No such channel seq_model!!!")
         return h

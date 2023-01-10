@@ -21,16 +21,16 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
     # figure 1
     if plot_type == PlotType.SISO_BY_SNR_STATIC_LINEAR:
         params_dicts = [
-            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 9, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 11, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 12, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 13, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 9, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 11, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 12, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 13, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 9, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 10, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 11, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name},
@@ -44,25 +44,25 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'SNR', 'BER'
     elif plot_type == PlotType.SISO_BY_SNR_STATIC_NON_LINEAR:
         params_dicts = [
-            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 9, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 11, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 12, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 13, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 9, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 11, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 12, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 13, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
             {'snr': 9, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
@@ -82,8 +82,8 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'SNR', 'BER'
     elif plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_LINEAR:
         params_dicts = [
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name},
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name},
             {'snr': 10, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name},
         ]
         methods_list = [
@@ -93,9 +93,9 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'Reliability', 'Metric'
     elif plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_NON_LINEAR:
         params_dicts = [
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.SISO.name,
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
             {'snr': 10, 'detector_type': DetectorType.maximum_likelihood.name, 'channel_type': ChannelModes.SISO.name,
              'linear': False},
@@ -108,25 +108,25 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'Reliability', 'Metric'
     elif plot_type == PlotType.MIMO_BY_SNR_FADING_LINEAR:
         params_dicts = [
-            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 9, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 11, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 12, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 13, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 9, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 11, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 12, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 13, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
         ]
         methods_list = [
@@ -136,25 +136,25 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'SNR', 'BER'
     elif plot_type == PlotType.MIMO_BY_SNR_FADING_NON_LINEAR:
         params_dicts = [
-            {'snr': 9, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 9, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 11, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 11, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 12, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 12, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 13, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 13, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 9, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 9, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 11, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 11, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 12, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 12, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 13, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 13, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
         ]
         methods_list = [
@@ -164,9 +164,9 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'SNR', 'BER'
     elif plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_LINEAR:
         params_dicts = [
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
         ]
         methods_list = [
@@ -176,9 +176,9 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'Reliability', 'Metric'
     elif plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_NON_LINEAR:
         params_dicts = [
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
              'linear': False, 'fading_in_channel': True},
         ]
         methods_list = [

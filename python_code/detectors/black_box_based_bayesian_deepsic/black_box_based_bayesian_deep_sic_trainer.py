@@ -6,7 +6,7 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.channel.modulator import BPSKModulator
-from python_code.detectors.bayesian_deepsic.bayesian_deep_sic_detector import LossVariable, BayesianDeepSICDetector
+from python_code.detectors.model_based_bayesian_deepsic.bayesian_deep_sic_detector import LossVariable, BayesianDeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF, Phase
@@ -26,7 +26,7 @@ def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
     return torch.sign(p - HALF)
 
 
-class BayesianDeepSICTrainer(Trainer):
+class ModelBasedBayesianDeepSICTrainer(Trainer):
     """Form the trainer class.
 
     Keyword arguments:

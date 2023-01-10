@@ -14,7 +14,7 @@ EPOCHS = 500
 
 class VNETTrainer(Trainer):
     """
-    Trainer for the ViterbiNet model.
+    Trainer for the ViterbiNet seq_model.
     """
 
     def __init__(self):

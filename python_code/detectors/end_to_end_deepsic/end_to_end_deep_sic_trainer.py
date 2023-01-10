@@ -6,7 +6,7 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.channel.modulator import BPSKModulator
-from python_code.detectors.deepsic.deep_sic_detector import DeepSICDetector
+from python_code.detectors.end_to_end_deepsic.end_to_end_deep_sic_detector import DeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF
@@ -26,7 +26,7 @@ def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
     return torch.sign(p - HALF)
 
 
-class DeepSICTrainer(Trainer):
+class EndToEndDeepSICTrainer(Trainer):
     """Form the trainer class.
 
     Keyword arguments:
@@ -41,11 +41,13 @@ class DeepSICTrainer(Trainer):
         super().__init__()
 
     def __str__(self):
-        return 'DeepSIC'
+        return 'End-To-End DeepSIC'
 
     def _initialize_detector(self):
-        self.detector = [[DeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
-                         range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
+        detectors_list = [[DeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
+                          range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
+        flat_detectors_list = [detector for sublist in detectors_list for detector in sublist]
+        self.detector = nn.ModuleList(flat_detectors_list)
 
     def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor) -> torch.Tensor:
         """
@@ -61,20 +63,16 @@ class DeepSICTrainer(Trainer):
         """
         Trains a DeepSIC Network
         """
-        self.optimizer = torch.optim.Adam(single_model.parameters(), lr=self.lr)
-        self.criterion = torch.nn.CrossEntropyLoss()
-        single_model = single_model.to(DEVICE)
-        loss = 0
         y_total = self.preprocess(rx)
-        for _ in range(EPOCHS):
-            soft_estimation = single_model(y_total)
-            current_loss = self.run_train_loop(soft_estimation, tx)
-            loss += current_loss
+        soft_estimation = single_model(y_total)
+        current_loss = self.run_train_loop(soft_estimation, tx)
+        return current_loss
 
-    def train_models(self, model: List[List[DeepSICDetector]], i: int, tx_all: List[torch.Tensor],
-                     rx_all: List[torch.Tensor]):
+    def train_models(self, i: int, tx_all: List[torch.Tensor], rx_all: List[torch.Tensor]):
+        cur_loss = 0
         for user in range(self.n_user):
-            self.train_model(model[user][i], tx_all[user], rx_all[user])
+            cur_loss += self.train_model(self.detector[user * ITERATIONS + i], tx_all[user], rx_all[user])
+        return cur_loss
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
         """
@@ -83,20 +81,24 @@ class DeepSICTrainer(Trainer):
         """
         if not conf.fading_in_channel:
             self._initialize_detector()
+        self.optimizer = torch.optim.Adam(self.detector.parameters(), lr=self.lr)
+        self.criterion = torch.nn.CrossEntropyLoss()
         initial_probs = tx.clone()
-        tx_all, rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
-        # Training the DeepSIC network for each user for iteration=1
-        self.train_models(self.detector, 0, tx_all, rx_all)
-        # Initializing the probabilities
-        probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
-        # Training the DeepSICNet for each user-symbol/iteration
-        for i in range(1, ITERATIONS):
-            # Generating soft symbols for training purposes
-            probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
-            # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-            tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
-            # Training the DeepSIC networks for the iteration>1
-            self.train_models(self.detector, i, tx_all, rx_all)
+        initial_tx_all, initial_rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
+        for _ in range(EPOCHS):
+            tx_all, rx_all = initial_tx_all.copy(), initial_rx_all.copy()
+            # Training the DeepSIC network for each user for iteration=1
+            loss = self.train_models(0, tx_all, rx_all)
+            # Initializing the probabilities
+            probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
+            # Training the DeepSICNet for each user-symbol/iteration
+            for i in range(1, ITERATIONS):
+                # Generating soft symbols for training purposes
+                probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
+                # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
+                tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
+                # Training the DeepSIC networks for the iteration>1
+                loss += self.train_models(i, tx_all, rx_all)
 
     def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
@@ -123,7 +125,7 @@ class DeepSICTrainer(Trainer):
             rx_all.append(current_y_train)
         return tx_all, rx_all
 
-    def calculate_posteriors(self, model: List[List[nn.Module]], i: int, probs_vec: torch.Tensor,
+    def calculate_posteriors(self, model: List[nn.Module], i: int, probs_vec: torch.Tensor,
                              rx: torch.Tensor) -> torch.Tensor:
         """
         Propagates the probabilities through the learnt networks.
@@ -134,6 +136,6 @@ class DeepSICTrainer(Trainer):
             input = torch.cat((rx, probs_vec[:, idx].reshape(rx.shape[0], -1)), dim=1)
             preprocessed_input = self.preprocess(input)
             with torch.no_grad():
-                output = self.softmax(model[user][i - 1](preprocessed_input))
+                output = self.softmax(model[user * ITERATIONS + i - 1](preprocessed_input))
             next_probs_vec[:, user] = output[:, 1:].reshape(next_probs_vec[:, user].shape)
         return next_probs_vec

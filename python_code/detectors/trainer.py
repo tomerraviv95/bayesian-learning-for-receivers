@@ -37,7 +37,7 @@ class Trainer(object):
 
     def _initialize_detector(self):
         """
-        Every trainer must have some base detector model
+        Every trainer must have some base detector seq_model
         """
         self.detector = None
 

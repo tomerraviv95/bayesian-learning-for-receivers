@@ -56,5 +56,5 @@ class SISOChannel:
         elif conf.channel_model == ChannelModels.Cost2100.name:
             h = Cost2100SISOChannel.calculate_channel(MEMORY_LENGTH, fading=conf.fading_in_channel, index=index)
         else:
-            raise ValueError("No such channel model!!!")
+            raise ValueError("No such channel seq_model!!!")
         return h

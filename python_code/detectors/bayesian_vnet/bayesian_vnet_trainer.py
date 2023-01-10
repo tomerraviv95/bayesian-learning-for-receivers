@@ -14,7 +14,7 @@ EPOCHS = 500
 
 class BayesianVNETTrainer(Trainer):
     """
-    Trainer for the ViterbiNet model.
+    Trainer for the ViterbiNet seq_model.
     """
 
     def __init__(self):
