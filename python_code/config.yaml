@@ -1,19 +1,19 @@
 # general
 run_name: 'test' # the name of the experiment
-seed: 5 # run seed
+seed: 51 # run seed
 
 # channel
-channel_type: 'SISO' # Channel type values: ['SISO','MIMO'].
+channel_type: 'MIMO' # Channel type values: ['SISO','MIMO'].
 channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
 detector_type: 'model' # 'model' or 'black_box' or 'bayesian' or 'maximum_likelihood'
 linear: True # channel linearity. Boolean value.
-fading_in_channel: False # If the channel is fading/non-fading. values: [True, False]
-snr: 12 # validation SNR value. values: float.
+fading_in_channel: True # If the channel is fading/non-fading. values: [True, False]
+snr: 13 # validation SNR value. values: float.
 
 # protocol
-block_length: 15200 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 200 # pilot bits
-blocks_num: 50 # number of validation frames. values: int.
+block_length: 10250 # coherence block time, total size of pilot + data. values: int.
+pilot_size: 250 # pilot bits
+blocks_num: 20 # number of validation frames. values: int.
 
 # online training hyperparameters
 is_online_training: True # Whether to run the online training (as in ViterbiNet). values: [True, False].

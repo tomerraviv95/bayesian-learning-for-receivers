@@ -164,8 +164,10 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
         xlabel, ylabel = 'SNR', 'BER'
     elif plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_LINEAR:
         params_dicts = [
-            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name},
-            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
         ]
         methods_list = [
             'Regular'
@@ -175,9 +177,9 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
     elif plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_NON_LINEAR:
         params_dicts = [
             {'snr': 10, 'detector_type': DetectorType.model.name, 'channel_type': ChannelModes.MIMO.name,
-             'linear': False},
+             'linear': False, 'fading_in_channel': True},
             {'snr': 10, 'detector_type': DetectorType.bayesian.name, 'channel_type': ChannelModes.MIMO.name,
-             'linear': False},
+             'linear': False, 'fading_in_channel': True},
         ]
         methods_list = [
             'Regular'

@@ -20,6 +20,7 @@ mpl.rcParams['legend.fontsize'] = 20
 mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
 
+colors = ['red','blue','green','orange']
 
 def plot_channel_by_phase():
     """
@@ -33,7 +34,7 @@ def plot_channel_by_phase():
     hs_array = hs.squeeze(1).cpu().numpy()
     plt.figure()
     for j in range(N_ANT):
-        plt.plot(hs_array[:, j], label=f'{j}')
+        plt.plot(hs_array[:, j], label=f'{j}',color=colors[j])
         plt.ylabel(r'magnitude', fontsize=20)
         plt.xlabel(r'block index', fontsize=20)
         plt.ylim([-0.1, 1.1])
