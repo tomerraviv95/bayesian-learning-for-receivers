@@ -6,7 +6,8 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.channel.modulator import BPSKModulator
-from python_code.detectors.model_based_bayesian_deepsic.bayesian_deep_sic_detector import LossVariable, BayesianDeepSICDetector
+from python_code.detectors.black_box_based_bayesian_deepsic.masked_deep_sic_detector import LossVariable, \
+    MaskedDeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF, Phase
@@ -14,6 +15,8 @@ from python_code.utils.constants import HALF, Phase
 conf = Config()
 ITERATIONS = 2
 EPOCHS = 250
+
+BASE_HIDDEN_SIZE = 64
 
 
 def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
@@ -42,15 +45,24 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
         self.kl_scale = 5
         self.kl_beta = 1e-2
         self.arm_beta = 1
+        self.log_softmax = nn.LogSoftmax(dim=1)
+        self.softmax = nn.Softmax(dim=1)
+        self.T = 1
         super().__init__()
 
     def __str__(self):
-        return 'BayesianDeepSIC'
+        return 'Black-Box-Based Bayesian DeepSIC'
 
     def _initialize_detector(self):
-        self.detector = [
-            [BayesianDeepSICDetector(self.ensemble_num, self.kl_scale).to(DEVICE) for _ in range(ITERATIONS)] for _ in
-            range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
+        detectors_list = [[MaskedDeepSICDetector(BASE_HIDDEN_SIZE, self.kl_scale).to(DEVICE) for _ in range(ITERATIONS)]
+                          for _ in
+                          range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
+        flat_detectors_list = [detector for sublist in detectors_list for detector in sublist]
+        self.detector = nn.ModuleList(flat_detectors_list)
+        dropout_logits_list = [
+            [nn.Parameter(torch.rand(BASE_HIDDEN_SIZE).reshape(1, -1)).to(DEVICE) for _ in range(ITERATIONS)] for _ in
+            range(self.n_user)]  # 2D list for Storing the dropout logits
+        self.dropout_logits = [dropout_logit for sublist in dropout_logits_list for dropout_logit in sublist]
 
     def calc_loss(self, est: LossVariable, tx: torch.IntTensor) -> torch.Tensor:
         """
@@ -75,24 +87,21 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
     def preprocess(rx: torch.Tensor) -> torch.Tensor:
         return rx.float()
 
-    def train_model(self, single_model: nn.Module, tx: torch.Tensor, rx: torch.Tensor):
+    def train_model(self, single_model: nn.Module, dropout_logit: nn.Parameter, tx: torch.Tensor, rx: torch.Tensor):
         """
         Trains a DeepSIC Network
         """
-        self.optimizer = torch.optim.Adam(single_model.parameters(), lr=self.lr)
-        self.criterion = torch.nn.CrossEntropyLoss()
-        single_model = single_model.to(DEVICE)
-        loss = 0
         y_total = self.preprocess(rx)
-        for _ in range(EPOCHS):
-            soft_estimation = single_model(y_total, phase=Phase.TRAIN)
-            current_loss = self.run_train_loop(soft_estimation, tx)
-            loss += current_loss
+        soft_estimation = single_model(y_total, dropout_logit, Phase.TRAIN)
+        current_loss = self.run_train_loop(soft_estimation, tx)
+        return current_loss
 
-    def train_models(self, model: List[List[BayesianDeepSICDetector]], i: int, tx_all: List[torch.Tensor],
-                     rx_all: List[torch.Tensor]):
+    def train_models(self, i: int, tx_all: List[torch.Tensor], rx_all: List[torch.Tensor]):
+        cur_loss = 0
         for user in range(self.n_user):
-            self.train_model(model[user][i], tx_all[user], rx_all[user])
+            cur_loss += self.train_model(self.detector[user * ITERATIONS + i],
+                                         self.dropout_logits[user * ITERATIONS + i], tx_all[user], rx_all[user])
+        return cur_loss
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
         """
@@ -101,20 +110,24 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
         """
         if not conf.fading_in_channel:
             self._initialize_detector()
+        self.optimizer = torch.optim.Adam(self.detector.parameters(), lr=self.lr)
+        self.criterion = torch.nn.CrossEntropyLoss()
         initial_probs = tx.clone()
-        tx_all, rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
-        # Training the DeepSIC network for each user for iteration=1
-        self.train_models(self.detector, 0, tx_all, rx_all)
-        # Initializing the probabilities
-        probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
-        # Training the DeepSICNet for each user-symbol/iteration
-        for i in range(1, ITERATIONS):
-            # Generating soft symbols for training purposes
-            probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx, Phase.TRAIN)
-            # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-            tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
-            # Training the DeepSIC networks for the iteration>1
-            self.train_models(self.detector, i, tx_all, rx_all)
+        initial_tx_all, initial_rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
+        for _ in range(EPOCHS):
+            tx_all, rx_all = initial_tx_all.copy(), initial_rx_all.copy()
+            # Training the DeepSIC network for each user for iteration=1
+            loss = self.train_models(0, tx_all, rx_all)
+            # Initializing the probabilities
+            probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
+            # Training the DeepSICNet for each user-symbol/iteration
+            for i in range(1, ITERATIONS):
+                # Generating soft symbols for training purposes
+                probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
+                # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
+                tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
+                # Training the DeepSIC networks for the iteration>1
+                loss += self.train_models(i, tx_all, rx_all)
 
     def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode

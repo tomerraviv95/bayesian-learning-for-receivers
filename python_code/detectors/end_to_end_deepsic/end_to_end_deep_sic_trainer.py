@@ -65,13 +65,13 @@ class EndToEndDeepSICTrainer(Trainer):
         """
         y_total = self.preprocess(rx)
         soft_estimation = single_model(y_total)
-        current_loss = self.run_train_loop(soft_estimation, tx)
-        return current_loss
+        loss = self.calc_loss(est=soft_estimation, tx=tx)
+        return loss
 
-    def train_models(self, i: int, tx_all: List[torch.Tensor], rx_all: List[torch.Tensor]):
+    def train_models(self, tx_all: List[torch.Tensor], rx_all: List[torch.Tensor]):
         cur_loss = 0
         for user in range(self.n_user):
-            cur_loss += self.train_model(self.detector[user * ITERATIONS + i], tx_all[user], rx_all[user])
+            cur_loss += self.train_model(self.detector[user * ITERATIONS + ITERATIONS - 1], tx_all[user], rx_all[user])
         return cur_loss
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
@@ -83,22 +83,20 @@ class EndToEndDeepSICTrainer(Trainer):
             self._initialize_detector()
         self.optimizer = torch.optim.Adam(self.detector.parameters(), lr=self.lr)
         self.criterion = torch.nn.CrossEntropyLoss()
-        initial_probs = tx.clone()
-        initial_tx_all, initial_rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
         for _ in range(EPOCHS):
-            tx_all, rx_all = initial_tx_all.copy(), initial_rx_all.copy()
-            # Training the DeepSIC network for each user for iteration=1
-            loss = self.train_models(0, tx_all, rx_all)
             # Initializing the probabilities
             probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
             # Training the DeepSICNet for each user-symbol/iteration
-            for i in range(1, ITERATIONS):
+            for i in range(ITERATIONS):
                 # Generating soft symbols for training purposes
                 probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
-                # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-                tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
-                # Training the DeepSIC networks for the iteration>1
-                loss += self.train_models(i, tx_all, rx_all)
+            # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
+            tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
+            loss = self.train_models(tx_all, rx_all)
+            # back propagation
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
     def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
@@ -125,7 +123,7 @@ class EndToEndDeepSICTrainer(Trainer):
             rx_all.append(current_y_train)
         return tx_all, rx_all
 
-    def calculate_posteriors(self, model: List[nn.Module], i: int, probs_vec: torch.Tensor,
+    def calculate_posteriors(self, model: nn.ModuleList, i: int, probs_vec: torch.Tensor,
                              rx: torch.Tensor) -> torch.Tensor:
         """
         Propagates the probabilities through the learnt networks.
@@ -135,7 +133,6 @@ class EndToEndDeepSICTrainer(Trainer):
             idx = [user_i for user_i in range(self.n_user) if user_i != user]
             input = torch.cat((rx, probs_vec[:, idx].reshape(rx.shape[0], -1)), dim=1)
             preprocessed_input = self.preprocess(input)
-            with torch.no_grad():
-                output = self.softmax(model[user * ITERATIONS + i - 1](preprocessed_input))
+            output = self.softmax(model[user * ITERATIONS + i - 1](preprocessed_input))
             next_probs_vec[:, user] = output[:, 1:].reshape(next_probs_vec[:, user].shape)
         return next_probs_vec

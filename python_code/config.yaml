@@ -5,7 +5,7 @@ seed: 51 # run seed
 # channel
 channel_type: 'MIMO' # Channel type values: ['SISO','MIMO'].
 channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
-detector_type: 'seq_model' # 'seq_model' or 'end_to_end_model' or 'model_based_bayesian' or 'maximum_likelihood'
+detector_type: 'end_to_end_model' # 'seq_model' or 'end_to_end_model' or 'model_based_bayesian' or 'maximum_likelihood'
 linear: True # channel linearity. Boolean value.
 fading_in_channel: True # If the channel is fading/non-fading. values: [True, False]
 snr: 12 # validation SNR value. values: float.

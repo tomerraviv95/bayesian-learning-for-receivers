@@ -45,7 +45,7 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
         super().__init__()
 
     def __str__(self):
-        return 'BayesianDeepSIC'
+        return 'Model-Based Bayesian DeepSIC'
 
     def _initialize_detector(self):
         self.detector = [
