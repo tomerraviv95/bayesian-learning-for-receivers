@@ -13,7 +13,7 @@ from python_code.utils.constants import HALF, Phase
 
 conf = Config()
 ITERATIONS = 2
-EPOCHS = 250
+EPOCHS = 400
 
 
 def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:

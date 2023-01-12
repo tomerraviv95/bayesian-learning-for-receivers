@@ -13,7 +13,7 @@ from python_code.utils.constants import HALF
 
 conf = Config()
 ITERATIONS = 2
-EPOCHS = 250
+EPOCHS = 400
 
 
 def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
@@ -65,7 +65,7 @@ class EndToEndDeepSICTrainer(Trainer):
         """
         y_total = self.preprocess(rx)
         soft_estimation = single_model(y_total)
-        loss = self.calc_loss(est=soft_estimation, tx=tx)
+        loss = self.calc_loss(est=soft_estimation, tx=tx.int())
         return loss
 
     def train_models(self, tx_all: List[torch.Tensor], rx_all: List[torch.Tensor]):

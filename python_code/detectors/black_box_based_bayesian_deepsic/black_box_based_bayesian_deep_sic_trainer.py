@@ -14,7 +14,7 @@ from python_code.utils.constants import HALF, Phase
 
 conf = Config()
 ITERATIONS = 2
-EPOCHS = 250
+EPOCHS = 400
 
 BASE_HIDDEN_SIZE = 64
 
@@ -29,7 +29,7 @@ def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
     return torch.sign(p - HALF)
 
 
-class ModelBasedBayesianDeepSICTrainer(Trainer):
+class BlackBoxBasedBayesianDeepSICTrainer(Trainer):
     """Form the trainer class.
 
     Keyword arguments:
@@ -47,6 +47,9 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
         self.arm_beta = 1
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.softmax = nn.Softmax(dim=1)
+        self.classes_num = BPSKModulator.constellation_size
+        self.hidden_size = BASE_HIDDEN_SIZE * self.classes_num
+        self.linear_input = (self.classes_num // 2) * N_ANT + (self.classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
         self.T = 1
         super().__init__()
 
@@ -54,54 +57,58 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
         return 'Black-Box-Based Bayesian DeepSIC'
 
     def _initialize_detector(self):
-        detectors_list = [[MaskedDeepSICDetector(BASE_HIDDEN_SIZE, self.kl_scale).to(DEVICE) for _ in range(ITERATIONS)]
+        detectors_list = [[MaskedDeepSICDetector(self.linear_input, self.hidden_size, self.classes_num, self.kl_scale).to(DEVICE) for _ in range(ITERATIONS)]
                           for _ in
                           range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
         flat_detectors_list = [detector for sublist in detectors_list for detector in sublist]
         self.detector = nn.ModuleList(flat_detectors_list)
         dropout_logits_list = [
-            [nn.Parameter(torch.rand(BASE_HIDDEN_SIZE).reshape(1, -1)).to(DEVICE) for _ in range(ITERATIONS)] for _ in
+            [nn.Parameter(torch.rand(self.hidden_size).reshape(1, -1)).to(DEVICE) for _ in range(ITERATIONS)] for _ in
             range(self.n_user)]  # 2D list for Storing the dropout logits
         self.dropout_logits = [dropout_logit for sublist in dropout_logits_list for dropout_logit in sublist]
 
-    def calc_loss(self, est: LossVariable, tx: torch.IntTensor) -> torch.Tensor:
+    def calc_loss(self, est: List[List[LossVariable]], tx: torch.IntTensor) -> torch.Tensor:
         """
         Cross Entropy loss - distribution over states versus the gt state label
         """
-        loss = self.criterion(input=est.priors, target=tx.long())
-        # ARM Loss
-        arm_loss = 0
-        for i in range(self.ensemble_num):
-            loss_term_arm_original = self.criterion(input=est.arm_original[i], target=tx.long())
-            loss_term_arm_tilde = self.criterion(input=est.arm_tilde[i], target=tx.long())
-            arm_delta = (loss_term_arm_tilde - loss_term_arm_original)
-            grad_logit = arm_delta * (est.u_list[i] - HALF)
-            arm_loss += torch.matmul(grad_logit, est.dropout_logit.T)
-        arm_loss = torch.mean(arm_loss)
-        # KL Loss
-        kl_term = self.kl_beta * est.kl_term
-        loss += self.arm_beta * arm_loss + kl_term
+        loss = 0
+        for user in range(self.n_user):
+            for ind_ensemble in range(self.ensemble_num):
+                cur_loss_var = est[user][ind_ensemble]
+                cur_tx = tx[user]
+                # point loss
+                loss += self.criterion(input=cur_loss_var.priors, target=cur_tx.long()) / self.ensemble_num
+                # ARM Loss
+                loss_term_arm_original = self.criterion(input=cur_loss_var.arm_original, target=cur_tx.long())
+                loss_term_arm_tilde = self.criterion(input=cur_loss_var.arm_tilde, target=cur_tx.long())
+                arm_delta = (loss_term_arm_tilde - loss_term_arm_original)
+                grad_logit = arm_delta * (cur_loss_var.u - HALF)
+                arm_loss = torch.matmul(grad_logit, cur_loss_var.dropout_logit.T)
+                arm_loss = torch.mean(arm_loss)
+                # KL Loss
+                kl_term = self.kl_beta * cur_loss_var.kl_term
+                loss += self.arm_beta * arm_loss + kl_term
         return loss
 
     @staticmethod
     def preprocess(rx: torch.Tensor) -> torch.Tensor:
         return rx.float()
 
-    def train_model(self, single_model: nn.Module, dropout_logit: nn.Parameter, tx: torch.Tensor, rx: torch.Tensor):
+    def infer_model(self, single_model: nn.Module, dropout_logit: nn.Parameter, rx: torch.Tensor):
         """
         Trains a DeepSIC Network
         """
         y_total = self.preprocess(rx)
-        soft_estimation = single_model(y_total, dropout_logit, Phase.TRAIN)
-        current_loss = self.run_train_loop(soft_estimation, tx)
-        return current_loss
+        return single_model(y_total, dropout_logit, Phase.TRAIN)
 
-    def train_models(self, i: int, tx_all: List[torch.Tensor], rx_all: List[torch.Tensor]):
-        cur_loss = 0
+    def infer_models(self, rx_all: List[torch.Tensor]):
+        loss_vars = []
         for user in range(self.n_user):
-            cur_loss += self.train_model(self.detector[user * ITERATIONS + i],
-                                         self.dropout_logits[user * ITERATIONS + i], tx_all[user], rx_all[user])
-        return cur_loss
+            loss_var = self.infer_model(self.detector[user * ITERATIONS + ITERATIONS - 1],
+                                        self.dropout_logits[user * ITERATIONS + ITERATIONS - 1],
+                                        rx_all[user])
+            loss_vars.append(loss_var)
+        return loss_vars
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
         """
@@ -112,30 +119,37 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
             self._initialize_detector()
         self.optimizer = torch.optim.Adam(self.detector.parameters(), lr=self.lr)
         self.criterion = torch.nn.CrossEntropyLoss()
-        initial_probs = tx.clone()
-        initial_tx_all, initial_rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
         for _ in range(EPOCHS):
-            tx_all, rx_all = initial_tx_all.copy(), initial_rx_all.copy()
-            # Training the DeepSIC network for each user for iteration=1
-            loss = self.train_models(0, tx_all, rx_all)
-            # Initializing the probabilities
-            probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
-            # Training the DeepSICNet for each user-symbol/iteration
-            for i in range(1, ITERATIONS):
-                # Generating soft symbols for training purposes
-                probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
+            total_loss_vars = [[] for user in range(self.n_user)]
+            for ind_ensemble in range(self.ensemble_num):
+                # Initializing the probabilities
+                probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
+                # Training the DeepSICNet for each user-symbol/iteration
+                for i in range(ITERATIONS):
+                    # Generating soft symbols for training purposes
+                    probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
                 # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
                 tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
-                # Training the DeepSIC networks for the iteration>1
-                loss += self.train_models(i, tx_all, rx_all)
+                loss_vars = self.infer_models(rx_all)
+                for user in range(self.n_user):
+                    total_loss_vars[user].append(loss_vars[user])
+            loss = self.calc_loss(total_loss_vars, tx_all)
+            # back propagation
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
     def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
-        probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
-        for i in range(ITERATIONS):
-            probs_vec = self.calculate_posteriors(self.detector, i + 1, probs_vec, rx, phase=Phase.TEST)
-        detected_word = BPSKModulator.demodulate(prob_to_BPSK_symbol(probs_vec.float()))
-        new_probs_vec = torch.cat([probs_vec.unsqueeze(dim=2), (1 - probs_vec).unsqueeze(dim=2)], dim=2)
+        total_probs_vec = 0
+        for ind_ensemble in range(self.ensemble_num):
+            probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
+            for i in range(ITERATIONS):
+                probs_vec = self.calculate_posteriors(self.detector, i + 1, probs_vec, rx)
+            total_probs_vec += probs_vec
+        total_probs_vec /= self.ensemble_num
+        detected_word = BPSKModulator.demodulate(prob_to_BPSK_symbol(total_probs_vec.float()))
+        new_probs_vec = torch.cat([total_probs_vec.unsqueeze(dim=2), (1 - total_probs_vec).unsqueeze(dim=2)], dim=2)
         confident_bits = 1 - torch.argmax(new_probs_vec, dim=2)
         confidence_word = torch.amax(new_probs_vec, dim=2)
         return detected_word, (confident_bits, confidence_word)
@@ -154,8 +168,8 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
             rx_all.append(current_y_train)
         return tx_all, rx_all
 
-    def calculate_posteriors(self, model: List[List[nn.Module]], i: int, probs_vec: torch.Tensor,
-                             rx: torch.Tensor, phase: Phase) -> torch.Tensor:
+    def calculate_posteriors(self, model: nn.ModuleList, i: int, probs_vec: torch.Tensor,
+                             rx: torch.Tensor) -> torch.Tensor:
         """
         Propagates the probabilities through the learnt networks.
         """
@@ -164,7 +178,8 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
             idx = [user_i for user_i in range(self.n_user) if user_i != user]
             input = torch.cat((rx, probs_vec[:, idx].reshape(rx.shape[0], -1)), dim=1)
             preprocessed_input = self.preprocess(input)
-            with torch.no_grad():
-                output = self.softmax(model[user][i - 1](preprocessed_input, phase).priors)
+            output = self.softmax(
+                model[user * ITERATIONS + i - 1](preprocessed_input, self.dropout_logits[user * ITERATIONS + i - 1],
+                                                 Phase.TEST).priors)
             next_probs_vec[:, user] = output[:, 1:].reshape(next_probs_vec[:, user].shape)
         return next_probs_vec

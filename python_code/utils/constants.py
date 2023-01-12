@@ -25,4 +25,4 @@ class DetectorType(Enum):
     end_to_end_model = 'end_to_end_model'
     seq_model = 'seq_model'
     model_based_bayesian = 'model_based_bayesian'
-    maximum_likelihood = 'maximum_likelihood'
+    black_box_based_bayesian = 'black_box_based_bayesian'
