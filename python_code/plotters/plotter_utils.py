@@ -34,33 +34,33 @@ MARKER_EVERY = 5
 
 
 def get_linestyle(method_name: str) -> str:
-    if 'Bayesian' in method_name:
+    if 'Black-Box-Based Bayesian' in method_name:
         return 'solid'
-    elif 'DeepSIC' in method_name or 'ViterbiNet' in method_name:
+    elif 'Model-Based Bayesian' in method_name:
         return 'dashed'
-    elif 'Viterbi' in method_name:
+    elif 'DeepSIC' in method_name:
         return 'dotted'
     else:
         raise ValueError('No such detector!!!')
 
 
 def get_marker(method_name: str) -> str:
-    if 'Bayesian' in method_name:
+    if 'Black-Box-Based Bayesian' in method_name:
         return 'o'
-    elif 'DeepSIC' in method_name or 'ViterbiNet' in method_name:
+    elif 'Model-Based Bayesian' in method_name:
         return 'X'
-    elif 'Viterbi' in method_name:
+    elif 'DeepSIC' in method_name:
         return 's'
     else:
         raise ValueError('No such method!!!')
 
 
 def get_color(method_name: str) -> str:
-    if 'Bayesian' in method_name:
+    if 'Black-Box-Based Bayesian' in method_name:
         return 'blue'
-    elif 'DeepSIC' in method_name or 'ViterbiNet' in method_name:
+    elif 'Model-Based Bayesian' in method_name:
         return 'black'
-    elif 'Viterbi' in method_name:
+    elif 'DeepSIC' in method_name:
         return 'red'
     else:
         raise ValueError('No such method!!!')
@@ -160,9 +160,10 @@ def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, st
         avg_acc_per_bin, avg_confidence_per_bin, ece_measure = calculate_reliability_and_ece(correct_values_list,
                                                                                              error_values_list, values)
         print(f"{method_name} ECE:{ece_measure}")
-        plt.bar(x=x_centers+width/2, height=avg_confidence_per_bin, label=method_name + ' - Confidence', width=width/2,
+        plt.bar(x=x_centers + width / 2, height=avg_confidence_per_bin, label=method_name + ' - Confidence',
+                width=width / 2,
                 color='red', alpha=0.4)
-        plt.bar(x=x_centers, height=avg_acc_per_bin, label=method_name + ' - Accuracy', width=width/2, color='blue',
+        plt.bar(x=x_centers, height=avg_acc_per_bin, label=method_name + ' - Accuracy', width=width / 2, color='blue',
                 alpha=0.4)
 
         # these are matplotlib.patch.Patch properties
@@ -190,9 +191,7 @@ def get_to_plot_values_dict(all_curves: List[Tuple[float, str]], names: List[str
         for cur_name, ser, correct_values_list, error_values_list in all_curves:
             if cur_name != method_name:
                 continue
-            if plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_LINEAR or \
-                    plot_type == PlotType.SISO_BY_RELIABILITY_STATIC_NON_LINEAR or \
-                    plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_LINEAR or \
+            if plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_LINEAR or \
                     plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_NON_LINEAR:
                 values_to_plot.append(correct_values_list)
                 values_to_plot.append(error_values_list)
