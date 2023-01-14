@@ -5,7 +5,7 @@ seed: 51 # run seed
 # channel
 channel_type: 'MIMO' # Channel type values: ['SISO','MIMO'].
 channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
-detector_type: 'black_box_based_bayesian'
+detector_type: 'model_based_bayesian'
 # 'seq_model' or 'end_to_end_model' or 'model_based_bayesian' or 'black_box_based_bayesian'
 linear: True # channel linearity. Boolean value.
 fading_in_channel: True # If the channel is fading/non-fading. values: [True, False]
@@ -13,7 +13,7 @@ snr: 12 # validation SNR value. values: float.
 
 # protocol
 block_length: 10250 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 250 # pilot bits
+pilot_size: 180 # pilot bits
 blocks_num: 20 # number of validation frames. values: int.
 
 # online training hyperparameters
