@@ -6,7 +6,7 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.channel.modulator import BPSKModulator
-from python_code.detectors.black_box_based_bayesian_deepsic.masked_deep_sic_detector import LossVariable, \
+from python_code.detectors.bayesian_deepsic.masked_deep_sic_detector import LossVariable, \
     MaskedDeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
@@ -29,7 +29,7 @@ def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
     return torch.sign(p - HALF)
 
 
-class BlackBoxBasedBayesianDeepSICTrainer(Trainer):
+class BayesianDeepSICTrainer(Trainer):
     """Form the trainer class.
 
     Keyword arguments:
@@ -54,7 +54,7 @@ class BlackBoxBasedBayesianDeepSICTrainer(Trainer):
         super().__init__()
 
     def __str__(self):
-        return 'Black-Box-Based Bayesian DeepSIC'
+        return 'Bayesian DeepSIC'
 
     def _initialize_detector(self):
         detectors_list = [[MaskedDeepSICDetector(self.linear_input, self.hidden_size, self.classes_num, self.kl_scale).to(DEVICE) for _ in range(ITERATIONS)]

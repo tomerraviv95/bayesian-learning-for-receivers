@@ -34,9 +34,9 @@ MARKER_EVERY = 5
 
 
 def get_linestyle(method_name: str) -> str:
-    if 'Black-Box-Based Bayesian' in method_name:
+    if 'Model-Based Bayesian' in method_name:
         return 'solid'
-    elif 'Model-Based Bayesian' in method_name:
+    elif 'Bayesian' in method_name:
         return 'dashed'
     elif 'DeepSIC' in method_name:
         return 'dotted'
@@ -45,9 +45,9 @@ def get_linestyle(method_name: str) -> str:
 
 
 def get_marker(method_name: str) -> str:
-    if 'Black-Box-Based Bayesian' in method_name:
+    if 'Model-Based Bayesian' in method_name:
         return 'o'
-    elif 'Model-Based Bayesian' in method_name:
+    elif 'Bayesian' in method_name:
         return 'X'
     elif 'DeepSIC' in method_name:
         return 's'
@@ -56,9 +56,9 @@ def get_marker(method_name: str) -> str:
 
 
 def get_color(method_name: str) -> str:
-    if 'Black-Box-Based Bayesian' in method_name:
+    if 'Model-Based Bayesian' in method_name:
         return 'blue'
-    elif 'Model-Based Bayesian' in method_name:
+    elif 'Bayesian' in method_name:
         return 'black'
     elif 'DeepSIC' in method_name:
         return 'red'
