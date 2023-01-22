@@ -6,8 +6,7 @@
 
 # Bayesian Learning for Deep Receivers
 
-Python repository for the paper "Bayesian Learning for Deep Receivers
-".
+Python repository for the paper "Bayesian Model-Based Deep Learning for MIMO Receivers".
 
 Please cite our [paper](https://arxiv.org/), if the code is used for publishing research.
 
@@ -29,7 +28,7 @@ Please cite our [paper](https://arxiv.org/), if the code is used for publishing 
 
 # Introduction
 
-This repository implements the proposed concept drift scheme for [ViterbiNet](https://ieeexplore.ieee.org/document/8815457), a machine-learning model-based detector, for the a channel with memory of L. We explain on the different directories and subdirectories below.
+This repository implements the proposed model-based Bayesian framework for [DeepSIC](https://arxiv.org/abs/2002.03214), a machine-learning model-based MIMO detector. We explain on the different directories and subdirectories below.
 
 # Folders Structure
 
