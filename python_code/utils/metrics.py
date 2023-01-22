@@ -1,8 +1,9 @@
+from itertools import chain
+
 import numpy as np
 import torch
 
 from python_code.utils.config_singleton import Config
-from itertools import chain
 
 conf = Config()
 
@@ -41,4 +42,6 @@ def calculate_reliability_and_ece(correct_values_list, error_values_list, values
     confidence_acc_diff = np.abs(np.array(avg_confidence_per_bin) - np.array(avg_acc_per_bin))
     ece_measure = np.sum(np.array(inbetween_indices_number_list) * confidence_acc_diff) / sum(
         inbetween_indices_number_list)
-    return avg_acc_per_bin, avg_confidence_per_bin, ece_measure
+    samples_per_bin = np.array(inbetween_indices_number_list)
+    normalized_samples_per_bin = samples_per_bin / np.sum(samples_per_bin)
+    return avg_acc_per_bin, avg_confidence_per_bin, ece_measure, normalized_samples_per_bin

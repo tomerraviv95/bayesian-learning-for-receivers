@@ -49,7 +49,8 @@ class BayesianDeepSICTrainer(Trainer):
         self.softmax = nn.Softmax(dim=1)
         self.classes_num = BPSKModulator.constellation_size
         self.hidden_size = BASE_HIDDEN_SIZE * self.classes_num
-        self.linear_input = (self.classes_num // 2) * N_ANT + (self.classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
+        self.linear_input = (self.classes_num // 2) * N_ANT + (self.classes_num - 1) * (
+                    N_USER - 1)  # from DeepSIC paper
         self.T = 1
         super().__init__()
 
@@ -57,9 +58,11 @@ class BayesianDeepSICTrainer(Trainer):
         return 'Bayesian DeepSIC'
 
     def _initialize_detector(self):
-        detectors_list = [[MaskedDeepSICDetector(self.linear_input, self.hidden_size, self.classes_num, self.kl_scale).to(DEVICE) for _ in range(ITERATIONS)]
-                          for _ in
-                          range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
+        detectors_list = [
+            [MaskedDeepSICDetector(self.linear_input, self.hidden_size, self.classes_num, self.kl_scale).to(DEVICE) for
+             _ in range(ITERATIONS)]
+            for _ in
+            range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
         flat_detectors_list = [detector for sublist in detectors_list for detector in sublist]
         self.detector = nn.ModuleList(flat_detectors_list)
         dropout_logits_list = [

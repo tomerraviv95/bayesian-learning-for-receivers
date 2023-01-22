@@ -35,12 +35,13 @@ def plot_channel_by_phase():
     plt.figure()
     for j in range(N_ANT):
         plt.plot(hs_array[:, j], label=f'Tap {j}',color=colors[j])
-        plt.ylabel(r'magnitude', fontsize=20)
-        plt.xlabel(r'block index', fontsize=20)
+        plt.ylabel('Magnitude')
+        plt.xlabel('Block Index')
         plt.ylim([-0.1, 1.1])
         plt.grid(True, which='both')
         plt.legend(loc='upper left', prop={'size': 25})
     plt.show()
+
 
 
 if __name__ == "__main__":

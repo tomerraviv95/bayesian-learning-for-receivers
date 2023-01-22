@@ -146,7 +146,7 @@ class Trainer(object):
             correct_values_list.append(correct_values)
             error_values_list.append(error_values)
         values = np.linspace(start=0, stop=1, num=9)
-        avg_acc_per_bin, avg_confidence_per_bin, ece_measure = calculate_reliability_and_ece(correct_values_list,
+        avg_acc_per_bin, avg_confidence_per_bin, ece_measure,normalized_samples_per_bin = calculate_reliability_and_ece(correct_values_list,
                                                                                              error_values_list, values)
         print(f'Final ser: {sum(total_ber) / len(total_ber)}')
         print(f"ECE:{ece_measure}")

@@ -31,6 +31,7 @@ conf = Config()
 
 MIN_BER_COEF = 0.2
 MARKER_EVERY = 5
+WIDTH_SCALING = 0.75
 
 
 def get_linestyle(method_name: str) -> str:
@@ -152,32 +153,40 @@ def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, st
     # plots all methods
     for method_name in names:
         print(method_name)
-        plt.figure()
+        f, (ax1, ax2) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]})
         correct_values_list, error_values_list = reliability_dict[method_name]
         x_centers = np.mean(np.concatenate([np.array(values)[:-1].reshape(-1, 1),
                                             np.array(values)[1:].reshape(-1, 1)], axis=1), axis=1)
-        width = x_centers[0]
-        avg_acc_per_bin, avg_confidence_per_bin, ece_measure = calculate_reliability_and_ece(correct_values_list,
-                                                                                             error_values_list, values)
+        width = WIDTH_SCALING * (x_centers[1] - x_centers[0])
+        avg_acc_per_bin, avg_confidence_per_bin, ece_measure, normalized_samples_per_bin = \
+            calculate_reliability_and_ece(correct_values_list, error_values_list, values)
         print(f"{method_name} ECE:{ece_measure}")
-        plt.bar(x=x_centers + width / 2, height=avg_confidence_per_bin, label=method_name + ' - Confidence',
-                width=width / 2,
-                color='red', alpha=0.4)
-        plt.bar(x=x_centers, height=avg_acc_per_bin, label=method_name + ' - Accuracy', width=width / 2, color='blue',
-                alpha=0.4)
 
+        ##### FIRST FIGURE #####
+        ax1.bar(x=x_centers + width / 4, height=avg_confidence_per_bin, label=method_name + ' - Confidence',
+                width=width / 2, color='red', alpha=0.4)
+        ax1.bar(x=x_centers - width / 4, height=avg_acc_per_bin, label=method_name + ' - Accuracy', width=width / 2,
+                color='blue', alpha=0.4)
         # these are matplotlib.patch.Patch properties
         props = dict(boxstyle='square', facecolor='lavender', alpha=0.3)
-
         # place a text box in upper left in axes coords
-        plt.text(0.05, 0.95, f"ECE={round(ece_measure, 3)}", fontsize=26,
+        ax1.text(0.05, 0.95, f"ECE={round(ece_measure, 3)}", fontsize=26,
                  verticalalignment='top', bbox=props)
-
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.grid(which='both', ls='--')
-        plt.ylim([0, 1])
-        plt.legend(loc='upper right', prop={'size': 15})
+        ax1.set_ylabel(ylabel, labelpad=20, size=24)
+        ax1.grid(which='both', ls='--')
+        ax1.set_ylim([0, 1])
+        ax1.legend(loc='lower left', prop={'size': 15})
+        ax1.set_xticks(values)
+        ##### SECOND FIGURE #####
+        ax2.bar(x=x_centers, height=normalized_samples_per_bin, width=width,
+                color='lightgreen')
+        ax2.set_xlabel(xlabel)
+        ax2.set_yscale('log')
+        ax2.set_ylabel('Sampling Frequency', size=24)
+        ax2.grid(which='both', ls='--')
+        ax2.set_xticks(values)
+        ax2.set_ylim([2e-3, 1])
+        ##### SAVE FIGURE #####
         plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'reliability_plot_{method_name}.png'),
                     bbox_inches='tight')
         plt.show()
