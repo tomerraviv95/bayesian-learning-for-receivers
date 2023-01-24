@@ -6,7 +6,7 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER, MODULATION_NUM_MAPPING
 from python_code.channel.modulator import BPSKModulator, QPSKModulator
-from python_code.detectors.seq_deepsic.deep_sic_detector import DeepSICDetector
+from python_code.detectors.seq_deepsic.seq_deep_sic_detector import SeqDeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF, ModulationType, QUARTER
@@ -45,7 +45,7 @@ class SeqDeepSICTrainer(Trainer):
         return 'DeepSIC'
 
     def _initialize_detector(self):
-        self.detector = [[DeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
+        self.detector = [[SeqDeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
                          range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
 
     def calc_loss(self, est: torch.Tensor, tx: torch.IntTensor) -> torch.Tensor:
@@ -76,7 +76,7 @@ class SeqDeepSICTrainer(Trainer):
             current_loss = self.run_train_loop(soft_estimation, tx)
             loss += current_loss
 
-    def train_models(self, model: List[List[DeepSICDetector]], i: int, tx_all: List[torch.Tensor],
+    def train_models(self, model: List[List[SeqDeepSICDetector]], i: int, tx_all: List[torch.Tensor],
                      rx_all: List[torch.Tensor]):
         for user in range(self.n_user):
             self.train_model(model[user][i], tx_all[user], rx_all[user])
@@ -89,6 +89,42 @@ class SeqDeepSICTrainer(Trainer):
         if not conf.fading_in_channel:
             self._initialize_detector()
 
+        initial_probs = self._initialize_probs(tx)
+        tx_all, rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
+        # Training the DeepSIC network for each user for iteration=1
+        self.train_models(self.detector, 0, tx_all, rx_all)
+        # Initializing the probabilities
+        probs_vec = self._initialize_probs_for_training(tx)
+        # Training the DeepSICNet for each user-symbol/iteration
+        for i in range(1, ITERATIONS):
+            # Generating soft symbols for training purposes
+            probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
+            # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
+            tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
+            # Training the DeepSIC networks for the iteration>1
+            self.train_models(self.detector, i, tx_all, rx_all)
+
+    def _initialize_probs_for_training(self, tx):
+        if conf.modulation_type == ModulationType.BPSK.name:
+            probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
+        elif conf.modulation_type == ModulationType.QPSK.name:
+            probs_vec = QUARTER * torch.ones(tx.shape).to(DEVICE).unsqueeze(-1).repeat(
+                [1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1])
+        else:
+            raise ValueError("No such constellation!")
+        return probs_vec
+
+    def _initialize_probs_for_infer(self):
+        if conf.modulation_type == ModulationType.BPSK.name:
+            probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
+        elif conf.modulation_type == ModulationType.QPSK.name:
+            probs_vec = QUARTER * torch.ones((conf.block_length - 2 * conf.pilot_size) // 2, N_ANT).to(
+                DEVICE).unsqueeze(-1).repeat([1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1]).float()
+        else:
+            raise ValueError("No such constellation!")
+        return probs_vec
+
+    def _initialize_probs(self, tx):
         if conf.modulation_type == ModulationType.BPSK.name:
             initial_probs = tx.clone()
         elif conf.modulation_type == ModulationType.QPSK.name:
@@ -102,38 +138,17 @@ class SeqDeepSICTrainer(Trainer):
             initial_probs[relevant_inds] = 1
         else:
             raise ValueError("No such constellation!")
-
-        tx_all, rx_all = self.prepare_data_for_training(tx, rx, initial_probs)
-        # Training the DeepSIC network for each user for iteration=1
-        self.train_models(self.detector, 0, tx_all, rx_all)
-        # Initializing the probabilities
-        if conf.modulation_type == ModulationType.BPSK.name:
-            probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
-        elif conf.modulation_type == ModulationType.QPSK.name:
-            probs_vec = QUARTER * torch.ones(tx.shape).to(DEVICE).unsqueeze(-1).repeat(
-                [1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1])
-        else:
-            raise ValueError("No such constellation!")
-        # Training the DeepSICNet for each user-symbol/iteration
-        for i in range(1, ITERATIONS):
-            # Generating soft symbols for training purposes
-            probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, rx)
-            # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-            tx_all, rx_all = self.prepare_data_for_training(tx, rx, probs_vec)
-            # Training the DeepSIC networks for the iteration>1
-            self.train_models(self.detector, i, tx_all, rx_all)
+        return initial_probs
 
     def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
-        if conf.modulation_type == ModulationType.BPSK.name:
-            probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
-        elif conf.modulation_type == ModulationType.QPSK.name:
-            probs_vec = QUARTER * torch.ones((conf.block_length - 2 * conf.pilot_size) // 2, N_ANT).to(
-                DEVICE).unsqueeze(-1).repeat([1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1]).float()
-        else:
-            raise ValueError("No such constellation!")
+        probs_vec = self._initialize_probs_for_infer()
         for i in range(ITERATIONS):
             probs_vec = self.calculate_posteriors(self.detector, i + 1, probs_vec, rx)
+        confidence_word, confident_bits, detected_word = self.compute_output(probs_vec)
+        return detected_word, (confident_bits, confidence_word)
+
+    def compute_output(self, probs_vec):
         if conf.modulation_type == ModulationType.BPSK.name:
             detected_word = BPSKModulator.demodulate(prob_to_BPSK_symbol(probs_vec.float()))
             new_probs_vec = torch.cat([probs_vec.unsqueeze(dim=2), (1 - probs_vec).unsqueeze(dim=2)], dim=2)
@@ -146,7 +161,7 @@ class SeqDeepSICTrainer(Trainer):
             confidence_word = torch.amax(new_probs_vec, dim=2)
         else:
             raise ValueError("No such constellation!")
-        return detected_word, (confident_bits, confidence_word)
+        return confidence_word, confident_bits, detected_word
 
     def prepare_data_for_training(self, tx: torch.Tensor, rx: torch.Tensor, probs_vec: torch.Tensor) -> [
         torch.Tensor, torch.Tensor]:

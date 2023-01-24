@@ -4,13 +4,14 @@ import torch
 from torch import nn
 
 from python_code import DEVICE
-from python_code.channel.channels_hyperparams import N_ANT, N_USER
-from python_code.channel.modulator import BPSKModulator
+from python_code.channel.channels_hyperparams import N_ANT, N_USER, MODULATION_NUM_MAPPING
+from python_code.channel.modulator import BPSKModulator, QPSKModulator
 from python_code.detectors.bayesian_deepsic.masked_deep_sic_detector import LossVariable, \
     MaskedDeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import HALF, Phase
+from python_code.utils.constants import HALF, Phase, ModulationType, QUARTER
+from python_code.utils.trellis_utils import prob_to_QPSK_symbol
 
 conf = Config()
 ITERATIONS = 2
@@ -47,10 +48,10 @@ class BayesianDeepSICTrainer(Trainer):
         self.arm_beta = 1
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.softmax = nn.Softmax(dim=1)
-        self.classes_num = BPSKModulator.constellation_size
+        self.classes_num = MODULATION_NUM_MAPPING[conf.modulation_type]
         self.hidden_size = BASE_HIDDEN_SIZE * self.classes_num
         self.linear_input = (self.classes_num // 2) * N_ANT + (self.classes_num - 1) * (
-                    N_USER - 1)  # from DeepSIC paper
+                N_USER - 1)  # from DeepSIC paper
         self.T = 1
         super().__init__()
 
@@ -95,7 +96,11 @@ class BayesianDeepSICTrainer(Trainer):
 
     @staticmethod
     def preprocess(rx: torch.Tensor) -> torch.Tensor:
-        return rx.float()
+        if conf.modulation_type == ModulationType.BPSK.name:
+            return rx.float()
+        elif conf.modulation_type == ModulationType.QPSK.name:
+            y_input = torch.view_as_real(rx[:, :N_ANT]).float().reshape(rx.shape[0], -1)
+            return torch.cat([y_input, rx[:, N_ANT:].float()], dim=1)
 
     def infer_model(self, single_model: nn.Module, dropout_logit: nn.Parameter, rx: torch.Tensor):
         """
@@ -113,6 +118,16 @@ class BayesianDeepSICTrainer(Trainer):
             loss_vars.append(loss_var)
         return loss_vars
 
+    def _initialize_probs_for_training(self, tx):
+        if conf.modulation_type == ModulationType.BPSK.name:
+            probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
+        elif conf.modulation_type == ModulationType.QPSK.name:
+            probs_vec = QUARTER * torch.ones(tx.shape).to(DEVICE).unsqueeze(-1).repeat(
+                [1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1])
+        else:
+            raise ValueError("No such constellation!")
+        return probs_vec
+
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
         """
         Main training function for DeepSIC trainer. Initializes the probabilities, then propagates them through the
@@ -126,7 +141,7 @@ class BayesianDeepSICTrainer(Trainer):
             total_loss_vars = [[] for user in range(self.n_user)]
             for ind_ensemble in range(self.ensemble_num):
                 # Initializing the probabilities
-                probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
+                probs_vec = self._initialize_probs_for_training(tx)
                 # Training the DeepSICNet for each user-symbol/iteration
                 for i in range(ITERATIONS):
                     # Generating soft symbols for training purposes
@@ -142,20 +157,43 @@ class BayesianDeepSICTrainer(Trainer):
             loss.backward()
             self.optimizer.step()
 
+    def _initialize_probs_for_infer(self):
+        if conf.modulation_type == ModulationType.BPSK.name:
+            probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
+        elif conf.modulation_type == ModulationType.QPSK.name:
+            probs_vec = QUARTER * torch.ones((conf.block_length - 2 * conf.pilot_size) // 2, N_ANT).to(
+                DEVICE).unsqueeze(-1).repeat([1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1]).float()
+        else:
+            raise ValueError("No such constellation!")
+        return probs_vec
+
     def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
         total_probs_vec = 0
         for ind_ensemble in range(self.ensemble_num):
-            probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
+            # detect and decode
+            probs_vec = self._initialize_probs_for_infer()
             for i in range(ITERATIONS):
                 probs_vec = self.calculate_posteriors(self.detector, i + 1, probs_vec, rx)
             total_probs_vec += probs_vec
         total_probs_vec /= self.ensemble_num
-        detected_word = BPSKModulator.demodulate(prob_to_BPSK_symbol(total_probs_vec.float()))
-        new_probs_vec = torch.cat([total_probs_vec.unsqueeze(dim=2), (1 - total_probs_vec).unsqueeze(dim=2)], dim=2)
-        confident_bits = 1 - torch.argmax(new_probs_vec, dim=2)
-        confidence_word = torch.amax(new_probs_vec, dim=2)
+        confidence_word, confident_bits, detected_word = self.compute_output(total_probs_vec)
         return detected_word, (confident_bits, confidence_word)
+
+    def compute_output(self, probs_vec):
+        if conf.modulation_type == ModulationType.BPSK.name:
+            detected_word = BPSKModulator.demodulate(prob_to_BPSK_symbol(probs_vec.float()))
+            new_probs_vec = torch.cat([probs_vec.unsqueeze(dim=2), (1 - probs_vec).unsqueeze(dim=2)], dim=2)
+            confident_bits = 1 - torch.argmax(new_probs_vec, dim=2)
+            confidence_word = torch.amax(new_probs_vec, dim=2)
+        elif conf.modulation_type == ModulationType.QPSK.name:
+            detected_word = QPSKModulator.demodulate(prob_to_QPSK_symbol(probs_vec.float()))
+            new_probs_vec = torch.cat([probs_vec, (1 - probs_vec.sum(dim=2)).unsqueeze(dim=2)], dim=2)
+            confident_bits = detected_word
+            confidence_word = torch.amax(new_probs_vec, dim=2)
+        else:
+            raise ValueError("No such constellation!")
+        return confidence_word, confident_bits, detected_word
 
     def prepare_data_for_training(self, tx: torch.Tensor, rx: torch.Tensor, probs_vec: torch.Tensor) -> [
         torch.Tensor, torch.Tensor]:
