@@ -26,3 +26,9 @@ class DetectorType(Enum):
     seq_model = 'seq_model'
     model_based_bayesian = 'model_based_bayesian'
     black_box_based_bayesian = 'black_box_based_bayesian'
+    black_box = 'black_box'
+
+
+class ModulationType(Enum):
+    BPSK = 'BPSK'
+    QPSK = 'QPSK'

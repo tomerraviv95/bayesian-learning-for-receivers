@@ -1,15 +1,16 @@
 # general
 run_name: 'test' # the name of the experiment
-seed: 51 # run seed
+seed: 0 # run seed
 
 # channel
-channel_type: 'SISO' # Channel type values: ['SISO','MIMO'].
+channel_type: 'MIMO' # Channel type values: ['SISO','MIMO'].
 channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
-detector_type: 'model_based_bayesian'
-# 'seq_model' or 'end_to_end_model' or 'model_based_bayesian' or 'black_box_based_bayesian'
+detector_type: 'black_box'
+# 'seq_model' or 'end_to_end_model' or 'model_based_bayesian' or 'black_box_based_bayesian' or 'black_box'
 linear: True # channel linearity. Boolean value.
 fading_in_channel: True # If the channel is fading/non-fading. values: [True, False]
 snr: 12 # validation SNR value. values: float.
+modulation_type: 'QPSK' # ['BPSK','QPSK']
 
 # protocol
 block_length: 10250 # coherence block time, total size of pilot + data. values: int.

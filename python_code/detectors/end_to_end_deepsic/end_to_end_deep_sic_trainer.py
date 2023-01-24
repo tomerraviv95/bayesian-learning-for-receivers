@@ -6,7 +6,7 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER
 from python_code.channel.modulator import BPSKModulator
-from python_code.detectors.end_to_end_deepsic.end_to_end_deep_sic_detector import DeepSICDetector
+from python_code.detectors.end_to_end_deepsic.end_to_end_deep_sic_detector import E2EDeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF
@@ -44,7 +44,7 @@ class EndToEndDeepSICTrainer(Trainer):
         return 'End-To-End DeepSIC'
 
     def _initialize_detector(self):
-        detectors_list = [[DeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
+        detectors_list = [[E2EDeepSICDetector().to(DEVICE) for _ in range(ITERATIONS)] for _ in
                           range(self.n_user)]  # 2D list for Storing the DeepSIC Networks
         flat_detectors_list = [detector for sublist in detectors_list for detector in sublist]
         self.detector = nn.ModuleList(flat_detectors_list)

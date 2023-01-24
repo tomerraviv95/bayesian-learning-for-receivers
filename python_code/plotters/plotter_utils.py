@@ -41,6 +41,8 @@ def get_linestyle(method_name: str) -> str:
         return 'dashed'
     elif 'DeepSIC' in method_name:
         return 'dotted'
+    elif 'DNN' in method_name:
+        return 'dashed'
     else:
         raise ValueError('No such detector!!!')
 
@@ -52,6 +54,8 @@ def get_marker(method_name: str) -> str:
         return 'X'
     elif 'DeepSIC' in method_name:
         return 's'
+    elif 'DNN' in method_name:
+        return 'p'
     else:
         raise ValueError('No such method!!!')
 
@@ -63,6 +67,8 @@ def get_color(method_name: str) -> str:
         return 'black'
     elif 'DeepSIC' in method_name:
         return 'red'
+    elif 'DNN' in method_name:
+        return 'green'
     else:
         raise ValueError('No such method!!!')
 

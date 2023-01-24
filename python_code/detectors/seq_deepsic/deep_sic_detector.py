@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from python_code.channel.channels_hyperparams import N_USER, N_ANT
+from python_code.channel.channels_hyperparams import N_USER, N_ANT, MODULATION_NUM_MAPPING
 from python_code.channel.modulator import BPSKModulator
 from python_code.utils.config_singleton import Config
 
@@ -31,7 +31,7 @@ class DeepSICDetector(nn.Module):
 
     def __init__(self):
         super(DeepSICDetector, self).__init__()
-        classes_num = BPSKModulator.constellation_size
+        classes_num = MODULATION_NUM_MAPPING[conf.modulation_type]
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
         self.fc1 = nn.Linear(linear_input, hidden_size)
@@ -42,4 +42,4 @@ class DeepSICDetector(nn.Module):
     def forward(self, rx: torch.Tensor) -> torch.Tensor:
         out0 = self.activation(self.fc1(rx))
         out1 = self.fc2(out0)
-        return self.log_softmax(out1)
+        return out1

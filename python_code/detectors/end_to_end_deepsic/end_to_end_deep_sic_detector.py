@@ -10,7 +10,7 @@ conf = Config()
 HIDDEN_BASE_SIZE = 64
 
 
-class DeepSICDetector(nn.Module):
+class E2EDeepSICDetector(nn.Module):
     """
     The DeepSIC Network Architecture
 
@@ -30,7 +30,7 @@ class DeepSICDetector(nn.Module):
     """
 
     def __init__(self):
-        super(DeepSICDetector, self).__init__()
+        super(E2EDeepSICDetector, self).__init__()
         classes_num = BPSKModulator.constellation_size
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper

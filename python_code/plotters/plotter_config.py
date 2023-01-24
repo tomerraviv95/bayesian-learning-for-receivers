@@ -11,6 +11,7 @@ class PlotType(Enum):
     MIMO_BY_SNR_FADING_NON_LINEAR = 'MIMO_BY_SNR_FADING_NON_LINEAR'
     MIMO_BY_RELIABILITY_FADING_LINEAR = 'MIMO_BY_RELIABILITY_FADING_LINEAR'
     MIMO_BY_RELIABILITY_FADING_NON_LINEAR = 'MIMO_BY_RELIABILITY_FADING_NON_LINEAR'
+    MIMO_BY_ECE_LINEAR = 'MIMO_BY_ECE_LINEAR'
 
 
 def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
@@ -73,12 +74,108 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
              'fading_in_channel': True},
             {'snr': 13, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
              'fading_in_channel': True},
+            {'snr': 6, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 7, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 8, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 9, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 10, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 11, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 12, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 13, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
         ]
         methods_list = [
             'Regular'
         ]
         values = list(range(6, 14))
         xlabel, ylabel = 'SNR', 'SER'
+    elif plot_type == PlotType.MIMO_BY_ECE_LINEAR:
+        params_dicts = [
+            {'snr': 6, 'detector_type': DetectorType.black_box_based_bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 7, 'detector_type': DetectorType.black_box_based_bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 8, 'detector_type': DetectorType.black_box_based_bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 9, 'detector_type': DetectorType.black_box_based_bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 10, 'detector_type': DetectorType.black_box_based_bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 11, 'detector_type': DetectorType.black_box_based_bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 12, 'detector_type': DetectorType.black_box_based_bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 13, 'detector_type': DetectorType.black_box_based_bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 6, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 7, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 8, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 9, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 11, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 12, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 13, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 6, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 7, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 8, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 9, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 11, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 12, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 13, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 6, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 7, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 8, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 9, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 10, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 11, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 12, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+            {'snr': 13, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'fading_in_channel': True},
+        ]
+        methods_list = [
+            'Regular'
+        ]
+        values = list(range(6, 14))
+        xlabel, ylabel = 'SNR', 'ECE'
     elif plot_type == PlotType.MIMO_BY_SNR_FADING_NON_LINEAR:
         params_dicts = [
             {'snr': 9, 'detector_type': DetectorType.black_box_based_bayesian.name,
