@@ -7,6 +7,8 @@ from python_code.utils.config_singleton import Config
 
 conf = Config()
 
+SENSITIVITY = 1e-3
+
 
 def calculate_ber(prediction: torch.Tensor, target: torch.Tensor) -> float:
     """
@@ -22,13 +24,15 @@ def calculate_reliability_and_ece(correct_values_list, error_values_list, values
     correct_values_list = np.array(list(chain.from_iterable(correct_values_list)))
     error_values_list = np.array(list(chain.from_iterable(error_values_list)))
     avg_confidence_per_bin, avg_acc_per_bin, inbetween_indices_number_list = [], [], []
+    total_values = len(correct_values_list) + len(error_values_list)
+    print(total_values)
     for val_j, val_j_plus_1 in zip(values[:-1], values[1:]):
         avg_confidence_value_in_bin, avg_acc_value_in_bin = 0, 0
         inbetween_correct_indices = np.logical_and(val_j <= correct_values_list,
                                                    correct_values_list <= val_j_plus_1)
         inbetween_errored_indices = np.logical_and(val_j <= error_values_list, error_values_list <= val_j_plus_1)
         inbetween_indices_number = inbetween_correct_indices.sum() + inbetween_errored_indices.sum()
-        if inbetween_indices_number > 0:
+        if total_values * SENSITIVITY < inbetween_indices_number:
             correct_values = correct_values_list[inbetween_correct_indices]
             errored_values = error_values_list[inbetween_errored_indices]
             avg_acc_value_in_bin = len(correct_values) / (len(correct_values) + len(errored_values))
