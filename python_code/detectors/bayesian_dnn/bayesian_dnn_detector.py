@@ -54,11 +54,7 @@ class BayesianDNNDetector(nn.Module):
         self.log_softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, rx: torch.Tensor, phase: str) -> LossVariable:
-        if phase == Phase.TRAIN:
-            log_probs = 0
-        else:
-            log_probs = 0
-            probs = 0
+        log_probs = 0
         arm_original, arm_tilde, u_list, kl_term = [], [], [], 0
 
         for ind_ensemble in range(self.ensemble_num):
@@ -69,24 +65,19 @@ class BayesianDNNDetector(nn.Module):
             u = torch.rand(x2.shape).to(DEVICE)
             x2_after_dropout = dropout_ori(x2, self.dropout_logit, u)
             # output
-            out = self.fc3(x2_after_dropout)
+            out = self.fc3(self.activation(x2_after_dropout))
             # if in train phase, keep parameters in list and compute the tilde output for arm loss calculation
+            log_probs += self.log_softmax(out)
             if phase == Phase.TRAIN:
-                log_probs += self.log_softmax(out)
                 u_list.append(u)
                 # compute first variable output
                 arm_original.append(self.log_softmax(out))
                 # compute second variable output
                 x_tilde = dropout_tilde(x2, self.dropout_logit, u)
-                out_tilde = self.fc3(x_tilde)
+                out_tilde = self.fc3(self.activation(x_tilde))
                 arm_tilde.append(self.log_softmax(out_tilde))
-            else:
-                probs += self.softmax(out.clone().detach())
 
-        if phase == Phase.TRAIN:
-            log_probs /= self.ensemble_num
-        else:
-            log_probs = torch.log(probs / self.ensemble_num)
+        log_probs /= self.ensemble_num
 
         # add KL term if training
         if phase == Phase.TRAIN:

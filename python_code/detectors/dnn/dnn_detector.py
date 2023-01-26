@@ -4,8 +4,6 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import MODULATION_NUM_MAPPING
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
-from python_code.utils.trellis_utils import calculate_symbols_from_states
 
 conf = Config()
 
@@ -33,11 +31,4 @@ class DNNDetector(nn.Module):
         self.net = nn.Sequential(*layers).to(DEVICE)
 
     def forward(self, rx: torch.Tensor, phase: str) -> torch.Tensor:
-        out = self.net(rx)
-        if phase == Phase.TEST:
-            # Decode the output
-            estimated_states = torch.argmax(out, dim=1)
-            estimated_words = calculate_symbols_from_states(self.n_ant, estimated_states)
-            return estimated_words.long()
-        else:
-            return out
+        return self.net(rx)

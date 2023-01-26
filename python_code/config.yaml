@@ -13,8 +13,8 @@ snr: 12 # validation SNR value. values: float.
 modulation_type: 'QPSK' # ['BPSK','QPSK']
 
 # protocol
-block_length: 10750 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 750 # pilot bits
+block_length: 12000 # coherence block time, total size of pilot + data. values: int.
+pilot_size: 2000 # pilot bits
 blocks_num: 10 # number of validation frames. values: int.
 
 # online training hyperparameters
