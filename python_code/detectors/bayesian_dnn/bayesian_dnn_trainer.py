@@ -1,7 +1,6 @@
 from typing import List
 
 import torch
-from torch import nn
 
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER, MODULATION_NUM_MAPPING
@@ -10,7 +9,7 @@ from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase, ModulationType, HALF
 from python_code.utils.trellis_utils import calculate_mimo_states, get_bits_from_qpsk_symbols, \
-    get_qpsk_symbols_from_bits
+    get_qpsk_symbols_from_bits, calculate_symbols_from_states
 
 conf = Config()
 
@@ -44,30 +43,29 @@ class BayesianDNNTrainer(Trainer):
         """
             Loads the DNN detector
         """
-        self.detector = [BayesianDNNDetector(self.n_user, self.n_ant, n_states=self.n_states, hidden_size=HIDDEN_SIZE)
-                         for i in range(self.ensemble_num)]
-        self.dropout_logits = nn.Parameter(torch.rand(HIDDEN_SIZE).reshape(1, -1)).to(DEVICE)
+        self.detector = BayesianDNNDetector(n_user=self.n_user, n_ant=self.n_ant, n_states=self.n_states,
+                                            hidden_size=HIDDEN_SIZE, kl_scale=self.kl_scale,
+                                            ensemble_num=self.ensemble_num)
 
     def calc_loss(self, est: List[LossVariable], tx: torch.IntTensor) -> torch.Tensor:
         """
         Cross Entropy loss - distribution over states versus the gt state label
         """
-        loss = 0
-        for ind_ensemble in range(self.ensemble_num):
-            cur_loss_var = est[ind_ensemble]
-            gt_states = calculate_mimo_states(self.n_ant, tx)
-            # point loss
-            loss += self.criterion(input=cur_loss_var.priors, target=gt_states) / self.ensemble_num
-            # ARM Loss
-            loss_term_arm_original = self.criterion(input=cur_loss_var.arm_original, target=gt_states)
-            loss_term_arm_tilde = self.criterion(input=cur_loss_var.arm_tilde, target=gt_states)
+        gt_states = calculate_mimo_states(self.n_ant, tx).to(DEVICE)
+        data_fitting_loss_term = self.criterion(input=est.priors, target=gt_states)
+        loss = data_fitting_loss_term
+        # ARM Loss
+        arm_loss = 0
+        for i in range(self.ensemble_num):
+            loss_term_arm_original = self.criterion(input=est.arm_original[i], target=gt_states)
+            loss_term_arm_tilde = self.criterion(input=est.arm_tilde[i], target=gt_states)
             arm_delta = (loss_term_arm_tilde - loss_term_arm_original)
-            grad_logit = arm_delta * (cur_loss_var.u - HALF)
-            arm_loss = torch.matmul(grad_logit, cur_loss_var.dropout_logit.T)
-            arm_loss = torch.mean(arm_loss)
-            # KL Loss
-            kl_term = self.kl_beta * cur_loss_var.kl_term
-            loss += self.arm_beta * arm_loss + kl_term
+            grad_logit = arm_delta * (est.u_list[i] - HALF)
+            arm_loss += torch.matmul(grad_logit, est.dropout_logit.T)
+        arm_loss = torch.mean(arm_loss)
+        # KL Loss
+        kl_term = self.kl_beta * est.kl_term
+        loss += self.arm_beta * arm_loss + kl_term
         return loss
 
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
@@ -76,10 +74,9 @@ class BayesianDNNTrainer(Trainer):
         elif conf.modulation_type == ModulationType.QPSK.name:
             rx = torch.view_as_real(rx).float().reshape(rx.shape[0], -1)
 
-        detected_word = self.detector[0](rx, phase=Phase.TEST)
-        for ind_ensemble in range(1, self.ensemble_num):
-            detected_word += self.detector[ind_ensemble](rx, phase=Phase.TEST)
-        detected_word /= self.ensemble_num
+        soft_estimation = self.detector(rx, phase=Phase.TEST).priors
+        estimated_states = torch.argmax(soft_estimation, dim=1)
+        detected_word = calculate_symbols_from_states(self.n_ant, estimated_states).long()
 
         if conf.modulation_type == ModulationType.QPSK.name:
             detected_word = get_bits_from_qpsk_symbols(detected_word)
