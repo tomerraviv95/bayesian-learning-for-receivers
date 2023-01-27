@@ -65,7 +65,7 @@ def compute_for_method(all_curves: List[Tuple[float, str]], method: str, params_
                        run_params_obj: RunParams):
     conf = Config()
     conf.load_config(os.path.join(CONFIG_RUNS_DIR, params_dict['channel_type'], f'{method}.yaml'))
-    trainer = CHANNEL_TYPE_TO_TRAINER_DICT[params_dict['channel_type']][params_dict['detector_type']]()
+    trainer = CHANNEL_TYPE_TO_TRAINER_DICT[params_dict['detector_type']]()
     full_method_name = f'{trainer.__str__()}'
     print(full_method_name)
     name = set_method_name(conf, full_method_name, params_dict)

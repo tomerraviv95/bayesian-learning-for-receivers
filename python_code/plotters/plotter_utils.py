@@ -37,12 +37,14 @@ WIDTH_SCALING = 0.75
 def get_linestyle(method_name: str) -> str:
     if 'Model-Based Bayesian' in method_name:
         return 'solid'
-    elif 'Bayesian' in method_name:
+    elif 'Bayesian DeepSIC' in method_name:
         return 'dashed'
     elif 'DeepSIC' in method_name:
         return 'dotted'
+    elif 'Bayesian DNN' in method_name:
+        return '-.'
     elif 'DNN' in method_name:
-        return 'dashed'
+        return '-.'
     else:
         raise ValueError('No such detector!!!')
 
@@ -50,10 +52,12 @@ def get_linestyle(method_name: str) -> str:
 def get_marker(method_name: str) -> str:
     if 'Model-Based Bayesian' in method_name:
         return 'o'
-    elif 'Bayesian' in method_name:
+    elif 'Bayesian DeepSIC' in method_name:
         return 'X'
     elif 'DeepSIC' in method_name:
         return 's'
+    elif 'Bayesian DNN' in method_name:
+        return 'p'
     elif 'DNN' in method_name:
         return 'p'
     else:
@@ -63,10 +67,12 @@ def get_marker(method_name: str) -> str:
 def get_color(method_name: str) -> str:
     if 'Model-Based Bayesian' in method_name:
         return 'blue'
-    elif 'Bayesian' in method_name:
+    elif 'Bayesian DeepSIC' in method_name:
         return 'black'
     elif 'DeepSIC' in method_name:
         return 'red'
+    elif 'Bayesian DNN' in method_name:
+        return 'purple'
     elif 'DNN' in method_name:
         return 'green'
     else:
