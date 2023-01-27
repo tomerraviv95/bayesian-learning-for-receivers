@@ -33,3 +33,4 @@ class DetectorType(Enum):
 class ModulationType(Enum):
     BPSK = 'BPSK'
     QPSK = 'QPSK'
+    EightPSK = 'EightPSK'

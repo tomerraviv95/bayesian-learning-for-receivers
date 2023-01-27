@@ -46,7 +46,34 @@ class QPSKModulator:
         return ((-1) * HALF * (torch.view_as_real(s) - 1)).transpose(1, 2).reshape(-1, s.shape[1])
 
 
+class EightPSKModulator:
+    @staticmethod
+    def modulate(c: np.ndarray) -> np.ndarray:
+        """
+        QPSK modulation
+        [0,0] -> [1/sqrt(2),1/sqrt(2)]
+        [0,1] -> [1/sqrt(2),-1/sqrt(2)]
+        [1,0] -> [-1/sqrt(2),1/sqrt(2)]
+        [1,1] -> [-1/sqrt(2),-1/sqrt(2)]
+        :param c: the binary codeword
+        :return: modulated signal
+        """
+        deg = c[:, ::3] * np.pi / 4 + c[:, 1::3] * np.pi / 2 + c[:, 2::3] * np.pi
+        x = np.exp(1j * deg)
+        return x
+
+    @staticmethod
+    def demodulate(s: np.ndarray) -> np.ndarray:
+        theta = np.arctan2(s.imag, s.real)
+        c1 = theta % np.pi / 4
+        c2 = theta % np.pi / 2
+        c3 = theta % np.pi
+        concat_cs = np.concatenate([c1[..., np.newaxis], c2[..., np.newaxis], c3[..., np.newaxis]], axis=2)
+        return concat_cs.reshape(-1, s.shape[1])
+
+
 MODULATION_DICT = {
     'BPSK': BPSKModulator,
-    'QPSK': QPSKModulator
+    'QPSK': QPSKModulator,
+    'EightPSK': EightPSKModulator
 }

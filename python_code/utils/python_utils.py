@@ -1,3 +1,4 @@
+import math
 import pickle as pkl
 from typing import Dict, Any
 
@@ -23,4 +24,4 @@ def normalize_for_modulation(size: int) -> int:
     """
     Return size if BPSK, or 0.5 * size if QPSK. This is the amount of symbols in tx/rx words
     """
-    return size * 2 // MODULATION_NUM_MAPPING[conf.modulation_type]
+    return int(size // math.log2(MODULATION_NUM_MAPPING[conf.modulation_type]))

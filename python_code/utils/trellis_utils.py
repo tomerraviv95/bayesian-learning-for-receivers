@@ -79,7 +79,8 @@ def calculate_symbols_from_states(state_size: int, gt_states: torch.Tensor) -> t
     if conf.modulation_type == ModulationType.BPSK.name:
         return gt_states.unsqueeze(-1).bitwise_and(mask).ne(0).long()
     elif conf.modulation_type == ModulationType.QPSK.name:
-        result = (gt_states.unsqueeze(-1) // mask) % MODULATION_NUM_MAPPING[conf.modulation_type]
+        result = torch.div(gt_states.unsqueeze(-1), mask, rounding_mode='floor')
+        result = result % MODULATION_NUM_MAPPING[conf.modulation_type]
         return result
 
 
@@ -106,6 +107,7 @@ def prob_to_BPSK_symbol(p: torch.Tensor) -> torch.Tensor:
     """
     return torch.sign(p - HALF)
 
+
 def prob_to_QPSK_symbol(p: torch.Tensor) -> torch.Tensor:
     """
     prob_to_symbol(x:PyTorch/Numpy Tensor/Array)
@@ -127,9 +129,22 @@ def get_qpsk_symbols_from_bits(b: np.ndarray) -> np.ndarray:
     return b[::2] + 2 * b[1::2]
 
 
+def get_eightpsk_symbols_from_bits(b: np.ndarray) -> np.ndarray:
+    return b[::3] + 2 * b[1::3] + 4 * b[2::3]
+
+
 def get_bits_from_qpsk_symbols(target: torch.Tensor) -> torch.Tensor:
     first_bit = target % 2
-    second_bit = torch.floor(target / 2)
+    second_bit = torch.floor(target / 2) % 2
     target = torch.cat([first_bit.unsqueeze(-1), second_bit.unsqueeze(-1)], dim=2).transpose(1, 2).reshape(
         2 * first_bit.shape[0], -1)
+    return target
+
+
+def get_bits_from_eightpsk_symbols(target: torch.Tensor) -> torch.Tensor:
+    first_bit = target % 2
+    second_bit = torch.floor(target / 2) % 2
+    third_bit = torch.floor(target / 4) % 2
+    target = torch.cat([first_bit.unsqueeze(-1), second_bit.unsqueeze(-1), third_bit.unsqueeze(-1)], dim=2) \
+        .transpose(1, 2).reshape(3 * first_bit.shape[0], -1)
     return target

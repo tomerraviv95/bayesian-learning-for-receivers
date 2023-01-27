@@ -7,5 +7,6 @@ N_ANT = 4
 
 MODULATION_NUM_MAPPING = {
     'BPSK': 2,
-    'QPSK': 4
+    'QPSK': 4,
+    'EightPSK': 8
 }

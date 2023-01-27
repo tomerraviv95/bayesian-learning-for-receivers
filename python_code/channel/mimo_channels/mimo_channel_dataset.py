@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import numpy as np
+import torch
 from numpy.random import default_rng
 
 from python_code.channel.channels_hyperparams import N_ANT, N_USER, MODULATION_NUM_MAPPING
@@ -9,7 +10,9 @@ from python_code.channel.mimo_channels.sed_channel import SEDChannel
 from python_code.channel.modulator import MODULATION_DICT
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import ChannelModels, ModulationType
-from python_code.utils.trellis_utils import get_qpsk_symbols_from_bits, generate_bits_by_state
+from python_code.utils.trellis_utils import get_bits_from_qpsk_symbols, get_bits_from_eightpsk_symbols
+from python_code.utils.trellis_utils import get_qpsk_symbols_from_bits, generate_bits_by_state, \
+    get_eightpsk_symbols_from_bits
 
 conf = Config()
 
@@ -36,6 +39,8 @@ class MIMOChannel:
         rx = MIMO_CHANNELS_DICT[conf.channel_model].transmit(s=s, h=h, snr=snr)
         if conf.modulation_type == ModulationType.QPSK.name:
             tx = get_qpsk_symbols_from_bits(tx)
+        if conf.modulation_type == ModulationType.EightPSK.name:
+            tx = get_eightpsk_symbols_from_bits(tx)
         return tx, rx.T
 
     def _generate_all_classes_pilots(self):
@@ -43,6 +48,8 @@ class MIMOChannel:
         tx_pilots = self._bits_generator.integers(0, 2, size=(self._pilots_length, N_USER))
         if conf.modulation_type == ModulationType.QPSK.name:
             tx_pilots = get_qpsk_symbols_from_bits(tx_pilots)
+        if conf.modulation_type == ModulationType.EightPSK.name:
+            tx_pilots = get_eightpsk_symbols_from_bits(tx_pilots)
 
         # ensure that you have each state
         unique_states_num = MODULATION_NUM_MAPPING[conf.modulation_type] ** N_USER
@@ -50,11 +57,9 @@ class MIMOChannel:
             tx_pilots[unique_state] = generate_bits_by_state(unique_state, N_USER).cpu().numpy().reshape(-1)
 
         if conf.modulation_type == ModulationType.QPSK.name:
-            first_bit = tx_pilots % 2
-            second_bit = np.floor(tx_pilots / 2)
-            concat_array = np.concatenate([np.expand_dims(first_bit, -1), np.expand_dims(second_bit, -1)], axis=2)
-            transposed_array = np.transpose(concat_array, [0, 2, 1])
-            tx_pilots = transposed_array.reshape(2 * first_bit.shape[0], -1)
+            tx_pilots = get_bits_from_qpsk_symbols(torch.Tensor(tx_pilots)).cpu().numpy()
+        if conf.modulation_type == ModulationType.EightPSK.name:
+            tx_pilots = get_bits_from_eightpsk_symbols(torch.Tensor(tx_pilots)).cpu().numpy()
         return tx_pilots
 
     def get_vectors(self, snr: float, index: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:

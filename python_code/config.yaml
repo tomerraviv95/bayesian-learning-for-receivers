@@ -10,11 +10,11 @@ detector_type: 'bayesian_black_box'
 linear: True # channel linearity. Boolean value.
 fading_in_channel: False # If the channel is fading/non-fading. values: [True, False]
 snr: 12 # validation SNR value. values: float.
-modulation_type: 'QPSK' # ['BPSK','QPSK']
+modulation_type: 'QPSK' # ['BPSK','QPSK','EightPSK']
 
 # protocol
-block_length: 12000 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 2000 # pilot bits
+block_length: 12900 # coherence block time, total size of pilot + data. values: int.
+pilot_size: 900 # pilot bits
 blocks_num: 10 # number of validation frames. values: int.
 
 # online training hyperparameters

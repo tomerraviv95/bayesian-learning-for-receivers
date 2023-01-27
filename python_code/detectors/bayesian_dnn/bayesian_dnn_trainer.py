@@ -78,6 +78,7 @@ class BayesianDNNTrainer(Trainer):
         confidence_word = torch.amax(torch.softmax(soft_estimation, dim=1), dim=1).unsqueeze(-1).repeat([1, self.n_ant])
         estimated_states = torch.argmax(soft_estimation, dim=1)
         detected_word = calculate_symbols_from_states(self.n_ant, estimated_states).long()
+        confidence_bits = detected_word
 
         if conf.modulation_type == ModulationType.QPSK.name:
             detected_word = get_bits_from_qpsk_symbols(detected_word)

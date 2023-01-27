@@ -7,14 +7,11 @@ from torch.utils.data import Dataset
 
 from python_code import DEVICE
 from python_code.channel.mimo_channels.mimo_channel_dataset import MIMOChannel
-from python_code.channel.siso_channels.siso_channel_dataset import SISOChannel
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import ChannelModes, ModulationType
+from python_code.utils.constants import ModulationType
 from python_code.utils.python_utils import normalize_for_modulation
 
 conf = Config()
-
-DATA_GENERATION_SIZE = 1000
 
 
 class ChannelModelDataset(Dataset):
@@ -26,12 +23,7 @@ class ChannelModelDataset(Dataset):
     def __init__(self, block_length: int, pilots_length: int, blocks_num: int):
         self.blocks_num = blocks_num
         self.block_length = block_length
-        if conf.channel_type == ChannelModes.SISO.name:
-            self.channel_type = SISOChannel(block_length, pilots_length)
-        elif conf.channel_type == ChannelModes.MIMO.name:
-            self.channel_type = MIMOChannel(block_length, pilots_length)
-        else:
-            raise ValueError("No such channel value!")
+        self.channel_type = MIMOChannel(block_length, pilots_length)
 
     def get_snr_data(self, snr: float, database: list):
         if database is None:
@@ -39,7 +31,9 @@ class ChannelModelDataset(Dataset):
         tx_full = np.empty((self.blocks_num, normalize_for_modulation(self.block_length), self.channel_type.tx_length))
         h_full = np.empty((self.blocks_num, *self.channel_type.h_shape))
         rx_full = np.empty((self.blocks_num, normalize_for_modulation(self.block_length), self.channel_type.rx_length),
-                           dtype=complex if conf.modulation_type == ModulationType.QPSK.name else float)
+                           dtype=complex
+                           if conf.modulation_type in [ModulationType.QPSK.name, ModulationType.EightPSK.name]
+                           else float)
         # accumulate words until reaches desired number
         for index in range(self.blocks_num):
             tx, h, rx = self.channel_type.get_vectors(snr, index)
