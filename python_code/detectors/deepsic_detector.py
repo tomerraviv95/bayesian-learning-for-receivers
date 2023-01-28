@@ -10,7 +10,7 @@ conf = Config()
 HIDDEN_BASE_SIZE = 64
 
 
-class SeqDeepSICDetector(nn.Module):
+class DeepSICDetector(nn.Module):
     """
     The DeepSIC Network Architecture
 
@@ -30,7 +30,7 @@ class SeqDeepSICDetector(nn.Module):
     """
 
     def __init__(self):
-        super(SeqDeepSICDetector, self).__init__()
+        super(DeepSICDetector, self).__init__()
         classes_num = MODULATION_NUM_MAPPING[conf.modulation_type]
         hidden_size = HIDDEN_BASE_SIZE * classes_num
         base_rx_size = N_ANT if conf.modulation_type == ModulationType.BPSK.name else 2 * N_ANT

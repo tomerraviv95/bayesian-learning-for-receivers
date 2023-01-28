@@ -140,7 +140,7 @@ class Trainer(object):
                 # re-train the detector
                 self._online_training(tx_pilot, rx_pilot)
             # detect data part after training on the pilot part
-            detected_word, (confident_bits, confidence_word) = self.forward(rx_data, h,get_bits_from_eightpsk_symbols(tx_data[:, :rx.shape[1]]))
+            detected_word, (confident_bits, confidence_word) = self.forward(rx_data, h)
             # calculate accuracy
             target = tx_data[:, :rx.shape[1]]
             if conf.modulation_type == ModulationType.QPSK.name:
