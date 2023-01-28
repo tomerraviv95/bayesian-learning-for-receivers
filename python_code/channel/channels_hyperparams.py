@@ -5,8 +5,8 @@ from python_code.utils.config_singleton import Config
 conf = Config()
 
 # MIMO
-N_USER = 4
-N_ANT = 4
+N_USER = 3
+N_ANT = 3
 
 MODULATION_NUM_MAPPING = {
     'BPSK': 2,

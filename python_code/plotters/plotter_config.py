@@ -8,11 +8,12 @@ from python_code.utils.constants import ChannelModes, DetectorType
 
 class PlotType(Enum):
     MIMO_BY_SNR_FADING_LINEAR = 'MIMO_BY_SNR_FADING_LINEAR'
+    MIMO_BY_SNR_FADING_LINEAR2 = 'MIMO_BY_SNR_FADING_LINEAR2'
+    MIMO_BY_SNR_FADING_LINEAR3 = 'MIMO_BY_SNR_FADING_LINEAR3'
     MIMO_BY_RELIABILITY_FADING_LINEAR = 'MIMO_BY_RELIABILITY_FADING_LINEAR'
 
 
 def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
-    # figure 1
     if plot_type == PlotType.MIMO_BY_SNR_FADING_LINEAR:
         params_dicts = [
             {'snr': 6, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name},
@@ -65,6 +66,96 @@ def get_config(plot_type: PlotType) -> Tuple[List[Dict], list, list, str, str]:
             'Regular'
         ]
         values = list(range(6, 14))
+        xlabel, ylabel = 'SNR', 'SER'
+    elif plot_type == PlotType.MIMO_BY_SNR_FADING_LINEAR2:
+        params_dicts = [
+            {'snr': 10, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 12, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 14, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 16, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 12, 'detector_type': DetectorType.bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 14, 'detector_type': DetectorType.bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 16, 'detector_type': DetectorType.bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 12, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 14, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 16, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 12, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 14, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+            {'snr': 16, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 39000, 'pilot_size': 12000, 'blocks_num': 10},
+
+        ]
+        methods_list = [
+            'Regular'
+        ]
+        values = list(range(10, 17, 2))
+        xlabel, ylabel = 'SNR', 'SER'
+    elif plot_type == PlotType.MIMO_BY_SNR_FADING_LINEAR3:
+        params_dicts = [
+            {'snr': 10, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 12, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 14, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 16, 'detector_type': DetectorType.black_box.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 10, 'detector_type': DetectorType.bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 12, 'detector_type': DetectorType.bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 14, 'detector_type': DetectorType.bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 16, 'detector_type': DetectorType.bayesian.name,
+             'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 10, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 12, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 14, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 16, 'detector_type': DetectorType.seq_model.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 10, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 12, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 14, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+            {'snr': 16, 'detector_type': DetectorType.model_based_bayesian.name, 'channel_type': ChannelModes.MIMO.name,
+             'modulation_type': 'EightPSK', 'block_length': 13200, 'pilot_size': 1200, 'blocks_num': 10},
+
+        ]
+        methods_list = [
+            'Regular'
+        ]
+        values = list(range(10, 17, 2))
         xlabel, ylabel = 'SNR', 'SER'
     elif plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_LINEAR:
         params_dicts = [
