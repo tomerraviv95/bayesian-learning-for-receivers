@@ -55,7 +55,7 @@ class MaskedDeepSICDetector(nn.Module):
         self.kl_scale = kl_scale
         self.log_softmax = nn.LogSoftmax(dim=1)
 
-    def forward(self, rx: torch.Tensor, dropout_logit: torch.Tensor, phase: Phase) -> LossVariable:
+    def forward(self, rx: torch.Tensor, dropout_logit: torch.Tensor, phase: Phase = Phase.TEST) -> LossVariable:
         kl_term = 0
         # first layer
         x = self.activation(self.fc1(rx))
@@ -74,9 +74,10 @@ class MaskedDeepSICDetector(nn.Module):
             first_layer_kl = scaling1 * torch.norm(self.fc1.weight, dim=1) ** 2
             H1 = entropy(torch.sigmoid(dropout_logit).reshape(-1))
             kl_term = torch.mean(first_layer_kl - H1)
+            return LossVariable(priors=self.log_softmax(out), u=u,
+                                arm_original=self.log_softmax(out),
+                                arm_tilde=self.log_softmax(out_tilde),
+                                dropout_logit=dropout_logit,
+                                out_tilde=out_tilde, kl_term=kl_term)
 
-        return LossVariable(priors=self.log_softmax(out), u=u,
-                            arm_original=self.log_softmax(out),
-                            arm_tilde=self.log_softmax(out_tilde),
-                            dropout_logit=dropout_logit,
-                            out_tilde=out_tilde, kl_term=kl_term)
+        return self.log_softmax(out)

@@ -1,13 +1,13 @@
 import collections
+from typing import Union
 
 import torch
 from torch import nn
 
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_USER, N_ANT, MODULATION_NUM_MAPPING
-from python_code.channel.modulator import BPSKModulator
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, ModulationType
 
 conf = Config()
 
@@ -55,22 +55,21 @@ class BayesianDeepSICDetector(nn.Module):
         super(BayesianDeepSICDetector, self).__init__()
         classes_num = MODULATION_NUM_MAPPING[conf.modulation_type]
         hidden_size = HIDDEN_BASE_SIZE * classes_num
-        linear_input = (classes_num // 2) * N_ANT + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
+        base_rx_size = N_ANT if conf.modulation_type == ModulationType.BPSK.name else 2 * N_ANT
+        linear_input = base_rx_size + (classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
         self.fc1 = nn.Linear(linear_input, hidden_size)
         self.activation = nn.ReLU()
         self.fc2 = nn.Linear(hidden_size, classes_num)
-        self.num_ensemble = ensemble_num
+        self.ensemble_num = ensemble_num
         self.kl_scale = kl_scale
         self.dropout_logit = nn.Parameter(torch.rand(hidden_size).reshape(1, -1))
         self.log_softmax = nn.LogSoftmax(dim=1)
-        self.softmax = nn.Softmax(dim=1)
-        self.T = 1
 
-    def forward(self, rx: torch.Tensor, phase: Phase) -> torch.Tensor:
+    def forward(self, rx: torch.Tensor, phase: Phase = Phase.TEST) -> Union[LossVariable, torch.Tensor]:
         log_probs = 0
         arm_original, arm_tilde, u_list, kl_term = [], [], [], 0
 
-        for ind_ensemble in range(self.num_ensemble):
+        for ind_ensemble in range(self.ensemble_num):
             # first layer
             x = self.activation(self.fc1(rx))
             u = torch.rand(x.shape).to(DEVICE)
@@ -88,9 +87,9 @@ class BayesianDeepSICDetector(nn.Module):
                 out_tilde = self.fc2(x_tilde)
                 arm_tilde.append(self.log_softmax(out_tilde))
             else:
-                log_probs += self.log_softmax(out / self.T)
+                log_probs += self.log_softmax(out)
 
-        log_probs /= self.num_ensemble
+        log_probs /= self.ensemble_num
 
         # add KL term if training
         if phase == Phase.TRAIN:
@@ -99,6 +98,6 @@ class BayesianDeepSICDetector(nn.Module):
             first_layer_kl = scaling1 * torch.norm(self.fc1.weight, dim=1) ** 2
             H1 = entropy(torch.sigmoid(self.dropout_logit).reshape(-1))
             kl_term = torch.mean(first_layer_kl - H1)
-
-        return LossVariable(priors=log_probs, arm_original=arm_original, arm_tilde=arm_tilde,
-                            u_list=u_list, kl_term=kl_term, dropout_logit=self.dropout_logit)
+            return LossVariable(priors=log_probs, arm_original=arm_original, arm_tilde=arm_tilde,
+                                u_list=u_list, kl_term=kl_term, dropout_logit=self.dropout_logit)
+        return log_probs
