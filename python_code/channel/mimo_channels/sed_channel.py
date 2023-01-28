@@ -2,7 +2,7 @@ import numpy as np
 
 from python_code.channel.channels_hyperparams import N_ANT
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import C, H_COEF
+from python_code.utils.constants import C, H_COEF, ModulationType
 
 conf = Config()
 
@@ -35,10 +35,14 @@ class SEDChannel:
         :param h: channel function
         :return: received word
         """
-
         conv = SEDChannel._compute_channel_signal_convolution(h, s)
-        sigma = 10 ** (-0.1 * snr)
-        w = np.sqrt(sigma) * np.random.randn(N_ANT, s.shape[1])
+        var = 10 ** (-0.1 * snr)
+        if conf.modulation_type == ModulationType.BPSK.name:
+            w = np.sqrt(var) * np.random.randn(N_ANT, s.shape[1])
+        else:
+            w_real = np.sqrt(var) / 2 * np.random.randn(N_ANT, s.shape[1])
+            w_imag = np.sqrt(var) / 2 * np.random.randn(N_ANT, s.shape[1]) * 1j
+            w = w_real + w_imag
         y = conv + w
         if not conf.linear:
             y = np.tanh(C * y)
