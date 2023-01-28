@@ -125,6 +125,27 @@ def prob_to_QPSK_symbol(p: torch.Tensor) -> torch.Tensor:
     return torch.view_as_complex(s)
 
 
+def prob_to_EightPSK_symbol(probs_vec: torch.Tensor) -> torch.Tensor:
+    """
+    prob_to_symbol(x:PyTorch/Numpy Tensor/Array)
+    Converts Probabilities to 8PSK Symbols by hard threshold.
+    first bit: [0,0.5] -> '+1',[0.5,1] -> '-1'
+    second bit: [0,0.5] -> '+1',[0.5,1] -> '-1'
+    :param p: probabilities vector
+    :return: symbols vector
+    """
+    p = probs_vec
+    s1_p = p[:, :, 0] + p[:, :, 2] + p[:, :, 4] + p[:, :, 6]
+    first_bit = torch.div(torch.sign(s1_p - HALF) + 1, 2, rounding_mode='floor')
+    s2_p = p[:, :, 1] + p[:, :, 2] + p[:, :, 5] + p[:, :, 6]
+    second_bit = torch.div(torch.sign(s2_p - HALF) + 1, 2, rounding_mode='floor')
+    s3_p = p[:, :, 3] + p[:, :, 4] + p[:, :, 5] + p[:, :, 6]
+    third_bit = torch.div(torch.sign(s3_p - HALF) + 1, 2, rounding_mode='floor')
+    deg = first_bit * np.pi / 4 + second_bit * np.pi / 2 + third_bit * np.pi
+    s = torch.exp(1j * deg)
+    return s
+
+
 def get_qpsk_symbols_from_bits(b: np.ndarray) -> np.ndarray:
     return b[::2] + 2 * b[1::2]
 
@@ -145,6 +166,6 @@ def get_bits_from_eightpsk_symbols(target: torch.Tensor) -> torch.Tensor:
     first_bit = target % 2
     second_bit = torch.floor(target / 2) % 2
     third_bit = torch.floor(target / 4) % 2
-    target = torch.cat([first_bit.unsqueeze(-1), second_bit.unsqueeze(-1), third_bit.unsqueeze(-1)], dim=2) \
-        .transpose(1, 2).reshape(3 * first_bit.shape[0], -1)
+    target = torch.cat([first_bit.unsqueeze(-1), second_bit.unsqueeze(-1), third_bit.unsqueeze(-1)], dim=2)
+    target = target.transpose(1, 2).reshape(3 * first_bit.shape[0], -1)
     return target

@@ -6,10 +6,11 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER, MODULATION_NUM_MAPPING
 from python_code.channel.modulator import BPSKModulator, QPSKModulator
-from python_code.detectors.model_based_bayesian_deepsic.bayesian_deep_sic_detector import LossVariable, BayesianDeepSICDetector
+from python_code.detectors.model_based_bayesian_deepsic.bayesian_deep_sic_detector import LossVariable, \
+    BayesianDeepSICDetector
 from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import HALF, Phase, ModulationType, QUARTER
+from python_code.utils.constants import HALF, Phase, ModulationType
 from python_code.utils.trellis_utils import prob_to_QPSK_symbol
 
 conf = Config()
@@ -119,7 +120,7 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
         if conf.modulation_type == ModulationType.BPSK.name:
             probs_vec = HALF * torch.ones(tx.shape).to(DEVICE)
         elif conf.modulation_type == ModulationType.QPSK.name:
-            probs_vec = QUARTER * torch.ones(tx.shape).to(DEVICE).unsqueeze(-1).repeat(
+            probs_vec = 1 / 4 * torch.ones(tx.shape).to(DEVICE).unsqueeze(-1).repeat(
                 [1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1])
         else:
             raise ValueError("No such constellation!")
@@ -151,7 +152,7 @@ class ModelBasedBayesianDeepSICTrainer(Trainer):
         if conf.modulation_type == ModulationType.BPSK.name:
             probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
         elif conf.modulation_type == ModulationType.QPSK.name:
-            probs_vec = QUARTER * torch.ones((conf.block_length - 2 * conf.pilot_size) // 2, N_ANT).to(
+            probs_vec = 1 / 4 * torch.ones((conf.block_length - 2 * conf.pilot_size) // 2, N_ANT).to(
                 DEVICE).unsqueeze(-1).repeat([1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1]).float()
         else:
             raise ValueError("No such constellation!")

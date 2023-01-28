@@ -5,7 +5,6 @@ import torch
 from numpy.random import default_rng
 
 from python_code.channel.channels_hyperparams import N_ANT, N_USER, MODULATION_NUM_MAPPING
-from python_code.channel.mimo_channels.cost_mimo_channel import Cost2100MIMOChannel
 from python_code.channel.mimo_channels.sed_channel import SEDChannel
 from python_code.channel.modulator import MODULATION_DICT
 from python_code.utils.config_singleton import Config
@@ -15,9 +14,6 @@ from python_code.utils.trellis_utils import get_qpsk_symbols_from_bits, generate
     get_eightpsk_symbols_from_bits
 
 conf = Config()
-
-MIMO_CHANNELS_DICT = {ChannelModels.Synthetic.name: SEDChannel,
-                      ChannelModels.Cost2100.name: Cost2100MIMOChannel}
 
 
 class MIMOChannel:
@@ -36,7 +32,7 @@ class MIMOChannel:
         # modulation
         s = MODULATION_DICT[conf.modulation_type].modulate(tx.T)
         # pass through channel
-        rx = MIMO_CHANNELS_DICT[conf.channel_model].transmit(s=s, h=h, snr=snr)
+        rx = SEDChannel.transmit(s=s, h=h, snr=snr)
         if conf.modulation_type == ModulationType.QPSK.name:
             tx = get_qpsk_symbols_from_bits(tx)
         if conf.modulation_type == ModulationType.EightPSK.name:
@@ -64,11 +60,6 @@ class MIMOChannel:
 
     def get_vectors(self, snr: float, index: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         # get channel values
-        if conf.channel_model == ChannelModels.Synthetic.name:
-            h = SEDChannel.calculate_channel(N_ANT, N_USER, index, conf.fading_in_channel)
-        elif conf.channel_model == ChannelModels.Cost2100.name:
-            h = Cost2100MIMOChannel.calculate_channel(N_ANT, N_USER, index, conf.fading_in_channel)
-        else:
-            raise ValueError("No such channel model!!!")
+        h = SEDChannel.calculate_channel(N_ANT, N_USER, index, conf.fading_in_channel)
         tx, rx = self._transmit(h, snr)
         return tx, h, rx

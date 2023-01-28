@@ -8,10 +8,12 @@ from torch.optim import RMSprop, Adam, SGD
 
 from python_code import DEVICE
 from python_code.channel.channel_dataset import ChannelModelDataset
+from python_code.channel.channels_hyperparams import CONSTELLATION_BITS
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import ModulationType
 from python_code.utils.metrics import calculate_ber, calculate_reliability_and_ece
-from python_code.utils.trellis_utils import get_bits_from_qpsk_symbols, get_qpsk_symbols_from_bits
+from python_code.utils.trellis_utils import get_bits_from_qpsk_symbols, get_qpsk_symbols_from_bits, \
+    get_bits_from_eightpsk_symbols, get_eightpsk_symbols_from_bits
 
 conf = Config()
 
@@ -132,26 +134,28 @@ class Trainer(object):
             # get current word and channel
             tx, h, rx = transmitted_words[block_ind], hs[block_ind], received_words[block_ind]
             # split words into data and pilot part
-            tx_pilot, tx_data = tx[:conf.pilot_size], tx[conf.pilot_size:]
-            rx_pilot, rx_data = rx[:conf.pilot_size], rx[conf.pilot_size:]
+            tx_pilot, tx_data = tx[:conf.pilot_size // CONSTELLATION_BITS], tx[conf.pilot_size // CONSTELLATION_BITS:]
+            rx_pilot, rx_data = rx[:conf.pilot_size // CONSTELLATION_BITS], rx[conf.pilot_size // CONSTELLATION_BITS:]
             if conf.is_online_training:
                 # re-train the detector
                 self._online_training(tx_pilot, rx_pilot)
             # detect data part after training on the pilot part
-            detected_word, (confident_bits, confidence_word) = self.forward(rx_data, h)
+            detected_word, (confident_bits, confidence_word) = self.forward(rx_data, h,get_bits_from_eightpsk_symbols(tx_data[:, :rx.shape[1]]))
             # calculate accuracy
             target = tx_data[:, :rx.shape[1]]
             if conf.modulation_type == ModulationType.QPSK.name:
                 target = get_bits_from_qpsk_symbols(target)
+            if conf.modulation_type == ModulationType.EightPSK.name:
+                target = get_bits_from_eightpsk_symbols(target)
             ber = calculate_ber(detected_word, target)
             if conf.modulation_type == ModulationType.QPSK.name:
                 confident_bits = get_qpsk_symbols_from_bits(confident_bits)
                 target = get_qpsk_symbols_from_bits(target)
-                correct_values = confidence_word[torch.eq(target, confident_bits)].tolist()
-                error_values = confidence_word[~torch.eq(target, confident_bits)].tolist()
-            else:
-                correct_values = confidence_word[torch.eq(target, confident_bits)].tolist()
-                error_values = confidence_word[~torch.eq(target, confident_bits)].tolist()
+            if conf.modulation_type == ModulationType.EightPSK.name:
+                confident_bits = get_eightpsk_symbols_from_bits(confident_bits)
+                target = get_eightpsk_symbols_from_bits(target)
+            correct_values = confidence_word[torch.eq(target, confident_bits)].tolist()
+            error_values = confidence_word[~torch.eq(target, confident_bits)].tolist()
             print(f'current: {block_ind, ber}')
             total_ber.append(ber)
             correct_values_list.append(correct_values)

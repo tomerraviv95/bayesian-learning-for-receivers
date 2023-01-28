@@ -1,6 +1,10 @@
+import math
+
 import numpy as np
 import torch
 
+from python_code import DEVICE
+from python_code.channel.channels_hyperparams import CONSTELLATION_BITS
 from python_code.utils.constants import HALF
 
 
@@ -50,26 +54,34 @@ class EightPSKModulator:
     @staticmethod
     def modulate(c: np.ndarray) -> np.ndarray:
         """
-        QPSK modulation
-        [0,0] -> [1/sqrt(2),1/sqrt(2)]
-        [0,1] -> [1/sqrt(2),-1/sqrt(2)]
-        [1,0] -> [-1/sqrt(2),1/sqrt(2)]
-        [1,1] -> [-1/sqrt(2),-1/sqrt(2)]
+        8PSK modulation
+        [0,0,0] -> [-1,0]
+        [0,0,1] -> [-1/sqrt(2),-1/sqrt(2)]
+        [0,1,0] -> [-1/sqrt(2),1/sqrt(2)]
+        [0,1,1] -> [0,-1]
+        [1,0,0] -> [0,1]
+        [1,0,1] -> [1/sqrt(2),-1/sqrt(2)]
+        [1,1,0] -> [1/sqrt(2),1/sqrt(2)]
+        [1,1,1] -> [1,0]
         :param c: the binary codeword
         :return: modulated signal
         """
-        deg = c[:, ::3] * np.pi / 4 + c[:, 1::3] * np.pi / 2 + c[:, 2::3] * np.pi
+        deg = (c[:, ::3] / 4 + c[:, 1::3] / 2 + c[:, 2::3]) * math.pi
         x = np.exp(1j * deg)
         return x
 
     @staticmethod
-    def demodulate(s: np.ndarray) -> np.ndarray:
-        theta = np.arctan2(s.imag, s.real)
-        c1 = theta % np.pi / 4
-        c2 = theta % np.pi / 2
-        c3 = theta % np.pi
-        concat_cs = np.concatenate([c1[..., np.newaxis], c2[..., np.newaxis], c3[..., np.newaxis]], axis=2)
-        return concat_cs.reshape(-1, s.shape[1])
+    def demodulate(s: torch.Tensor) -> torch.Tensor:
+        theta = torch.atan2(s.imag, s.real) / np.pi
+        theta[theta < 0] += 2
+        c1 = torch.div(theta, 0.25, rounding_mode='floor') % 2
+        c2 = torch.div(theta, 0.5, rounding_mode='floor') % 2
+        c3 = torch.div(theta, 1, rounding_mode='floor') % 2
+        concat_cs = torch.zeros(s.shape[0] * CONSTELLATION_BITS, s.shape[1]).to(DEVICE)
+        concat_cs[::3, :] = c1
+        concat_cs[1::3, :] = c2
+        concat_cs[2::3, :] = c3
+        return concat_cs
 
 
 MODULATION_DICT = {
