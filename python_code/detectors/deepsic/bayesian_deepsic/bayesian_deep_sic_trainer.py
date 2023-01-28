@@ -69,7 +69,7 @@ class BayesianDeepSICTrainer(DeepSICTrainer):
                 loss_term_arm_original = self.criterion(input=cur_loss_var.arm_original, target=cur_tx.long())
                 loss_term_arm_tilde = self.criterion(input=cur_loss_var.arm_tilde, target=cur_tx.long())
                 arm_delta = (loss_term_arm_tilde - loss_term_arm_original)
-                grad_logit = arm_delta * (cur_loss_var.u - HALF)
+                grad_logit = arm_delta * (cur_loss_var.u_list - HALF)
                 arm_loss = torch.matmul(grad_logit, cur_loss_var.dropout_logit.T)
                 arm_loss = torch.mean(arm_loss)
                 # KL Loss

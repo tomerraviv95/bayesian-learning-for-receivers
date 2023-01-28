@@ -1,33 +1,13 @@
-import collections
-
 import torch
 from torch import nn
 
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import MODULATION_NUM_MAPPING
+from python_code.utils.bayesian_utils import dropout_ori, dropout_tilde, entropy, LossVariable
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
 
 conf = Config()
-
-LossVariable = collections.namedtuple('LossVariable',
-                                      'priors arm_original arm_tilde u_list kl_term dropout_logit')
-
-
-def entropy(prob):
-    return -prob * torch.log2(prob) - (1 - prob) * torch.log2(1 - prob)
-
-
-def dropout_ori(x, logit, u):
-    dropout_prob = torch.sigmoid(logit)
-    z = (u < dropout_prob).float()
-    return x * z
-
-
-def dropout_tilde(x, logit, u):
-    dropout_prob_tilde = torch.sigmoid(-logit)
-    z_tilde = (u > dropout_prob_tilde).float()
-    return x * z_tilde
 
 
 class BayesianDNNDetector(nn.Module):

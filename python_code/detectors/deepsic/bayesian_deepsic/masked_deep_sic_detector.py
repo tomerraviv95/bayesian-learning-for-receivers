@@ -1,31 +1,12 @@
-import collections
-
 import torch
 from torch import nn
 
 from python_code import DEVICE
+from python_code.utils.bayesian_utils import dropout_ori, dropout_tilde, entropy, LossVariable
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
 
 conf = Config()
-
-LossVariable = collections.namedtuple('LossVariable', 'priors u arm_original arm_tilde dropout_logit out_tilde kl_term')
-
-
-def entropy(prob):
-    return -prob * torch.log2(prob) - (1 - prob) * torch.log2(1 - prob)
-
-
-def dropout_ori(x, logit, u):
-    dropout_prob = torch.sigmoid(logit)
-    z = (u < dropout_prob).float()
-    return x * z
-
-
-def dropout_tilde(x, logit, u):
-    dropout_prob_tilde = torch.sigmoid(-logit)
-    z_tilde = (u > dropout_prob_tilde).float()
-    return x * z_tilde
 
 
 class MaskedDeepSICDetector(nn.Module):
@@ -74,10 +55,10 @@ class MaskedDeepSICDetector(nn.Module):
             first_layer_kl = scaling1 * torch.norm(self.fc1.weight, dim=1) ** 2
             H1 = entropy(torch.sigmoid(dropout_logit).reshape(-1))
             kl_term = torch.mean(first_layer_kl - H1)
-            return LossVariable(priors=self.log_softmax(out), u=u,
+            return LossVariable(priors=self.log_softmax(out), u_list=u,
                                 arm_original=self.log_softmax(out),
                                 arm_tilde=self.log_softmax(out_tilde),
                                 dropout_logit=dropout_logit,
-                                out_tilde=out_tilde, kl_term=kl_term)
+                                kl_term=kl_term)
 
         return self.log_softmax(out)
