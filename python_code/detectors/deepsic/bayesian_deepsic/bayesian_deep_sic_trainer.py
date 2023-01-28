@@ -5,7 +5,7 @@ from torch import nn
 
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import N_ANT, N_USER, MODULATION_NUM_MAPPING
-from python_code.detectors.bayesian_deepsic.masked_deep_sic_detector import LossVariable, \
+from python_code.detectors.deepsic.bayesian_deepsic.masked_deep_sic_detector import LossVariable, \
     MaskedDeepSICDetector
 from python_code.detectors.deepsic.deepsic_trainer import DeepSICTrainer
 from python_code.utils.config_singleton import Config
