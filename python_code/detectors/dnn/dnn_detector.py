@@ -4,6 +4,7 @@ from torch import nn
 from python_code import DEVICE
 from python_code.channel.channels_hyperparams import MODULATION_NUM_MAPPING
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase, ModulationType
 
 conf = Config()
 
@@ -19,16 +20,18 @@ class DNNDetector(nn.Module):
         super(DNNDetector, self).__init__()
         self.n_user = n_user
         self.n_ant = n_ant
+        self.base_rx_size = self.n_ant if conf.modulation_type == ModulationType.BPSK.name else 2 * self.n_ant
         self.n_states = MODULATION_NUM_MAPPING[conf.modulation_type] ** n_ant
         self.initialize_dnn()
 
     def initialize_dnn(self):
-        layers = [nn.Linear(MODULATION_NUM_MAPPING[conf.modulation_type] * self.n_user // 2, HIDDEN_SIZE),
+        layers = [nn.Linear(self.base_rx_size, HIDDEN_SIZE),
                   nn.ReLU(),
                   nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
                   nn.ReLU(),
                   nn.Linear(HIDDEN_SIZE, self.n_states)]
         self.net = nn.Sequential(*layers).to(DEVICE)
 
-    def forward(self, rx: torch.Tensor, phase: str) -> torch.Tensor:
-        return self.net(rx)
+    def forward(self, rx: torch.Tensor, phase: Phase) -> torch.Tensor:
+        soft_estimation = self.net(rx)
+        return soft_estimation

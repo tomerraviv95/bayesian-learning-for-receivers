@@ -6,7 +6,7 @@ from python_code.detectors.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase, ModulationType
 from python_code.utils.trellis_utils import calculate_mimo_states, get_bits_from_qpsk_symbols, \
-    calculate_symbols_from_states
+    get_bits_from_eightpsk_symbols, calculate_symbols_from_states
 
 conf = Config()
 
@@ -50,8 +50,9 @@ class DNNTrainer(Trainer):
     def forward(self, rx: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
         if conf.modulation_type == ModulationType.BPSK.name:
             rx = rx.float()
-        elif conf.modulation_type == ModulationType.QPSK.name:
+        elif conf.modulation_type in [ModulationType.QPSK.name, ModulationType.EightPSK.name]:
             rx = torch.view_as_real(rx).float().reshape(rx.shape[0], -1)
+
         soft_estimation = self.detector(rx, phase=Phase.TEST)
         confidence_word = torch.amax(torch.softmax(soft_estimation, dim=1), dim=1).unsqueeze(-1).repeat([1, self.n_ant])
         estimated_states = torch.argmax(soft_estimation, dim=1)
@@ -59,9 +60,11 @@ class DNNTrainer(Trainer):
 
         if conf.modulation_type == ModulationType.QPSK.name:
             detected_word = get_bits_from_qpsk_symbols(detected_word)
-            confidence_bits = detected_word
-
-        return detected_word, (confidence_bits, confidence_word)
+            detected_word = detected_word
+        if conf.modulation_type == ModulationType.EightPSK.name:
+            detected_word = get_bits_from_eightpsk_symbols(detected_word)
+            confident_bits = detected_word
+        return detected_word, (confident_bits, confidence_word)
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
         """
@@ -74,7 +77,7 @@ class DNNTrainer(Trainer):
             self._initialize_detector()
         self.deep_learning_setup(self.lr)
 
-        if conf.modulation_type == ModulationType.QPSK.name:
+        if conf.modulation_type in [ModulationType.QPSK.name, ModulationType.EightPSK.name]:
             rx = torch.view_as_real(rx).float().reshape(rx.shape[0], -1)
 
         # run training loops
