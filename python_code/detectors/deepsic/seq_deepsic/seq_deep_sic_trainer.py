@@ -4,8 +4,8 @@ import torch
 from torch import nn
 
 from python_code import DEVICE
-from python_code.detectors.deepsic_detector import DeepSICDetector
-from python_code.detectors.deepsic_trainer import DeepSICTrainer
+from python_code.detectors.deepsic.deepsic_detector import DeepSICDetector
+from python_code.detectors.deepsic.deepsic_trainer import DeepSICTrainer
 from python_code.utils.config_singleton import Config
 
 conf = Config()
