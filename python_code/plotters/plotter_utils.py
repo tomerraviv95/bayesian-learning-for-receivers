@@ -182,7 +182,7 @@ def plot_by_reliability_values(all_curves: List[Tuple[np.ndarray, np.ndarray, st
         # these are matplotlib.patch.Patch properties
         props = dict(boxstyle='square', facecolor='lavender', alpha=0.3)
         # place a text box in upper left in axes coords
-        ax1.text(0.05, 0.95, f"ECE={round(ece_measure, 3)}", fontsize=26,
+        ax1.text(0.5, 0.95, f"ECE={round(ece_measure, 3)}", fontsize=26,
                  verticalalignment='top', bbox=props)
         ax1.set_ylabel(ylabel, labelpad=20, size=24)
         ax1.grid(which='both', ls='--')

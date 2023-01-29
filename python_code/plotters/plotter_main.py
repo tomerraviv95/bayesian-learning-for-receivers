@@ -4,10 +4,10 @@ from python_code.plotters.plotter_utils import plot_by_values, plot_by_reliabili
 
 if __name__ == '__main__':
     run_over = False  # whether to run over previous results
-    trial_num = 1  # number of trials per point estimate, used to reduce noise by averaging results of multiple runs
+    trial_num = 3  # number of trials per point estimate, used to reduce noise by averaging results of multiple runs
     run_params_obj = RunParams(run_over=run_over,
                                trial_num=trial_num)
-    plot_type = PlotType.MIMO_BY_SNR_FADING_LINEAR3
+    plot_type = PlotType.MIMO_BY_RELIABILITY_FADING_LINEAR
     print(plot_type.name)
     params_dicts, methods_list, values, xlabel, ylabel = get_config(plot_type)
     all_curves = []
