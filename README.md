@@ -72,6 +72,39 @@ Extra utils for many different things:
 
 Controls all hyperparameters:
 
+* seed - random integer used as the generation seed.
+
+* channel_type - only 'MIMO' is supported for the conference version.
+
+* channel_model - the type of channel used, only 'Synthetic' is support in the conference version but we will add in the journal paper more.
+
+* detector_type - the type of evaluted detector. 'seq_model' - sequentially trained DeepSIC, 'end_to_end_model' - end-to-end trained DeepSIC, 
+'model_based_bayesian'- our proposed model-based Bayesian DeepSIC, 'bayesian' - Bayesian DeepSIC, 'black_box' - DNN detector, 'bayesian_black_box' - Bayesian black-box DNN detector.
+
+* linear - only linear channel is supported in this version.
+
+* fading_in_channel - whether the channel is time-varying. We used 'False' such that the channel is static for the conference paper.
+
+* snr - signal-to-noise value in dB (float).
+
+* modulation_type - which modulation to use, in the set of ['BPSK','QPSK','EightPSK'].
+ 
+* n_user - integer number of transmitting devices.
+
+* n_ant - integer number of received signals.
+
+* block_length - number of total bits in transmission (pilots + info).
+
+* pilot_size - number of pilot bits in the transmission.
+
+* blocks_num - number of blocks to transmit.
+
+* is_online_training - whether to train at each incoming block using its pilot part or skip training. 
+
+* loss_type - loss type in the set: ['BCE','CrossEntropy','MSE'].
+
+* optimizer_type - in the set ['Adam','RMSprop','SGD'].
+
 ### evaluate
 
 Run the evaluation using one of the methods, as appears in config.yaml
