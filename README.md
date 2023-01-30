@@ -38,34 +38,47 @@ The python simulations of the simplified communication chain: symbols generation
 
 ### channel 
 
-Includes all relevant channel functions and classes. The class in "channel_dataset.py" implements the main class for aggregating pairs of (transmitted,received) samples. 
-In "channel.py", the ISI AWGN channel is implemented. "channel_estimation.py" is for the calculation of the h values. Lastly, the channel BPSK modulator lies in "channel_modulator.py".
-
-### plotters
-
-Plotting of the BER versus SNR, for Figures 3 and 4 in the paper.
+Includes the symbols generation and transmission part, up to the creation of the dataset composed of (transmitted, received) tuples in the channel_dataset wrapper class. The modulation is done in the modulator file.
 
 ### trainers 
 
 Includes the next files:
 
-(1) The backbone detector in "vnet_detector.py" module;
+(1) The backbone trainer.py which holds the most basic functions, including the network initialization and the sequential transmission in the channel and BER calculation. 
 
-(2) A basic "trainer.py" class, includes the main evaluation function. It is also used for parsing the config.yaml file and preparing the deep learning setup (loss, optimizer, ...).
+(2) The DeepSIC trainer and backbone detector, including the Bayesian variants. Note that we included end-to-end implementation of DeepSIC even as it is not employed in the paper (DeepSIC in the paper refers to the sequential trained one which has higher performance).
 
-(3) The ViterbiNet trainer, in "vnet_trainer.py", which inherets from the basic trainer class, extending it as needed.
+(3) The black-box DNN we compare to, and its Bayesian variant for comparison - again it is not used in the paper as the DNN is inferior to DeepSIC in small data regime (so its Bayesian variant is not so interesting).
+
+### plotters
+
+The main script is plotter_main.py, and it is used to plot the figures in the paper including ser versus snr, and reliability diagrams.
 
 ### utils
 
-Extra utils for saving and loading pkls; calculating the accuracy over FER and BER; and transitioning over the trellis.
+Extra utils for many different things: 
 
-### config
+* python utils - saving and loading pkls. 
 
-Controls all parameters and hyperparameters.
+* metrics - calculating accuracy, confidence, ECE and sampling frequency for reliability diagrams.
+
+* config_singleton - holds the singleton definition of the config yaml.
+
+* probs utils - for generate symbols from states; symbols from probs and vice versa.
+
+* bayesian utils - for the calculation of the LBD loss.
+
+### config.yaml
+
+Controls all hyperparameters:
+
+### evaluate
+
+Run the evaluation using one of the methods, as appears in config.yaml
 
 ## resources
 
-Keeps the channel coefficients vectors (4 taps, each with 300 blocks).
+Keeps the configs runs files for creating the paper's figures.
 
 ## dir_definitions 
 
@@ -79,7 +92,7 @@ Then install the environment, follow the installation setup below.
 
 At last, open PyCharm in the root directory. You may run either the trainers or one of the plotters.
 
-This code was simulated with GeForce RTX 2060 with driver version 432.00 and CUDA 10.1. 
+This code was simulated with GeForce RTX 3060 with driver version 516.94 and CUDA 11.6. 
 
 ## Environment Installation
 
