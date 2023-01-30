@@ -12,11 +12,6 @@ EPOCHS = 400
 
 
 class SeqDeepSICTrainer(DeepSICTrainer):
-    """Form the trainer class.
-
-    Keyword arguments:
-
-    """
 
     def __init__(self):
         super().__init__()

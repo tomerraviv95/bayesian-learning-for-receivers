@@ -210,7 +210,7 @@ def get_to_plot_values_dict(all_curves: List[Tuple[float, str]], names: List[str
         for cur_name, ser, correct_values_list, error_values_list in all_curves:
             if cur_name != method_name:
                 continue
-            if plot_type == PlotType.MIMO_BY_RELIABILITY_FADING_LINEAR:
+            if plot_type == PlotType.MIMO_BY_RELIABILITY_EightPSK:
                 values_to_plot.append(correct_values_list)
                 values_to_plot.append(error_values_list)
             else:

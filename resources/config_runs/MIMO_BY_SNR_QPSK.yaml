@@ -14,9 +14,9 @@ n_user: 5 # number of transmitting devices
 n_ant: 5 # number of received signals
 
 # protocol
-block_length: 20250 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 250 # pilot bits
-blocks_num: 20 # number of validation frames. values: int.
+block_length: 8800 # coherence block time, total size of pilot + data. values: int.
+pilot_size: 800 # pilot bits
+blocks_num: 10 # number of validation frames. values: int.
 
 # online training hyperparameters
 is_online_training: True # Whether to run the online training (as in ViterbiNet). values: [True, False].

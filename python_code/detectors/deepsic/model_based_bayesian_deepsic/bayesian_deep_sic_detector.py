@@ -1,3 +1,5 @@
+## Implement the LBD method "Learnable Bernoulli Dropout for Bayesian Deep Learning"
+
 from typing import Union
 
 import torch
@@ -12,23 +14,6 @@ HIDDEN_BASE_SIZE = 64
 
 
 class BayesianDeepSICDetector(nn.Module):
-    """
-    The DeepSIC Network Architecture
-
-    ===========Architecture=========
-    DeepSICNet(
-      (fullyConnectedLayer): Linear(in_features=s_nK+s_nN-1, out_features=60, bias=True)
-      (sigmoid): Sigmoid()
-      (fullyConnectedLayer): Linear(in_features=60, out_features=30, bias=True)
-      (reluLayer): ReLU()
-      (fullyConnectedLayer2): Linear(in_features=30, out_features=2, bias=True)
-    ================================
-    Note:
-    The output of the network is not probabilities,
-    to obtain probabilities apply a softmax function to the output, viz.
-    output = DeepSICNet(data)
-    probs = torch.softmax(output, dim), for a batch inference, set dim=1; otherwise dim=0.
-    """
 
     def __init__(self, ensemble_num, kl_scale):
         super(BayesianDeepSICDetector, self).__init__()

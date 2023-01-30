@@ -12,12 +12,6 @@ EPOCHS = 400
 
 
 class EndToEndDeepSICTrainer(DeepSICTrainer):
-    """Form the trainer class.
-
-    Keyword arguments:
-
-    """
-
     def __init__(self):
 
         super().__init__()
@@ -49,7 +43,7 @@ class EndToEndDeepSICTrainer(DeepSICTrainer):
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
         """
         Main training function for DeepSIC trainer. Initializes the probabilities, then propagates them through the
-        network, training sequentially each network and not by end-to-end manner (each one individually).
+        network, training the entire networks by end-to-end manner.
         """
         if not conf.fading_in_channel:
             self._initialize_detector()

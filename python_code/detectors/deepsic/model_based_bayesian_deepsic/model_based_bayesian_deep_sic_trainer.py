@@ -1,3 +1,4 @@
+## Implement the LBD method "Learnable Bernoulli Dropout for Bayesian Deep Learning"
 from typing import List
 
 import torch
@@ -14,10 +15,8 @@ EPOCHS = 400
 
 
 class ModelBasedBayesianDeepSICTrainer(DeepSICTrainer):
-    """Form the trainer class.
-
-    Keyword arguments:
-
+    """
+    Our Proposed Approach, Each DeepSIC is applied with the Bayesian Approximation Individually
     """
 
     def __init__(self):

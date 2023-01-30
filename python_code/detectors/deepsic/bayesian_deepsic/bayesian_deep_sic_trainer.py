@@ -1,3 +1,4 @@
+## Implement the LBD method "Learnable Bernoulli Dropout for Bayesian Deep Learning"
 from typing import List
 
 import torch
@@ -17,12 +18,9 @@ BASE_HIDDEN_SIZE = 64
 
 
 class BayesianDeepSICTrainer(DeepSICTrainer):
-    """Form the trainer class.
-
-    Keyword arguments:
-
     """
-
+    The Black-Box Bayesian Approach Applied to DeepSIC
+    """
     def __init__(self):
         self.ensemble_num = 5
         self.kl_scale = 5
@@ -92,10 +90,6 @@ class BayesianDeepSICTrainer(DeepSICTrainer):
         return loss_vars
 
     def _online_training(self, tx: torch.Tensor, rx: torch.Tensor):
-        """
-        Main training function for DeepSIC trainer. Initializes the probabilities, then propagates them through the
-        network, training sequentially each network and not by end-to-end manner (each one individually).
-        """
         if not conf.fading_in_channel:
             self._initialize_detector()
         self.optimizer = torch.optim.Adam(self.detector.parameters(), lr=self.lr)

@@ -60,10 +60,10 @@ def gather_plots_by_trials(all_curves: List[Tuple[str, List, List, List]], conf:
     all_curves.append((method_name, total_ber, total_correct_values_list, total_error_values_list))
 
 
-def compute_for_method(all_curves: List[Tuple[float, str]], method: str, params_dict: Dict[str, Union[int, str]],
-                       run_params_obj: RunParams):
+def compute_for_method(all_curves: List[Tuple[float, str]], params_dict: Dict[str, Union[int, str]],
+                       run_params_obj: RunParams, plot_type_name: str):
     conf = Config()
-    conf.load_config(os.path.join(CONFIG_RUNS_DIR, params_dict['channel_type'], f'{method}.yaml'))
+    conf.load_config(os.path.join(CONFIG_RUNS_DIR, f'{plot_type_name}.yaml'))
     name = set_method_name(conf, params_dict)
     trainer = CHANNEL_TYPE_TO_TRAINER_DICT[params_dict['detector_type']]()
     full_method_name = f'{trainer.__str__()}'
