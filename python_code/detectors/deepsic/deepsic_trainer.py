@@ -7,7 +7,7 @@ from python_code import DEVICE, conf
 from python_code.channel.modulator import MODULATION_DICT, MODULATION_NUM_MAPPING
 from python_code.detectors.trainer import Trainer
 from python_code.utils.constants import ModulationType, HALF
-from python_code.utils.trellis_utils import prob_to_EightPSK_symbol, prob_to_QPSK_symbol, prob_to_BPSK_symbol
+from python_code.utils.probs_utils import prob_to_EightPSK_symbol, prob_to_QPSK_symbol, prob_to_BPSK_symbol
 
 ITERATIONS = 2
 

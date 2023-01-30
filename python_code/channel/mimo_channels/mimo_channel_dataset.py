@@ -8,8 +8,8 @@ from python_code import conf
 from python_code.channel.mimo_channels.sed_channel import SEDChannel
 from python_code.channel.modulator import MODULATION_DICT, MODULATION_NUM_MAPPING
 from python_code.utils.constants import ModulationType
-from python_code.utils.trellis_utils import get_bits_from_qpsk_symbols, get_bits_from_eightpsk_symbols
-from python_code.utils.trellis_utils import get_qpsk_symbols_from_bits, generate_bits_by_state, \
+from python_code.utils.probs_utils import get_bits_from_qpsk_symbols, get_bits_from_eightpsk_symbols
+from python_code.utils.probs_utils import get_qpsk_symbols_from_bits, generate_bits_by_state, \
     get_eightpsk_symbols_from_bits
 
 

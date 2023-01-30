@@ -12,7 +12,7 @@ from python_code.channel.channel_dataset import ChannelModelDataset
 from python_code.channel.modulator import MODULATION_NUM_MAPPING
 from python_code.utils.constants import ModulationType
 from python_code.utils.metrics import calculate_ber, calculate_reliability_and_ece
-from python_code.utils.trellis_utils import get_bits_from_qpsk_symbols, get_qpsk_symbols_from_bits, \
+from python_code.utils.probs_utils import get_bits_from_qpsk_symbols, get_qpsk_symbols_from_bits, \
     get_bits_from_eightpsk_symbols, get_eightpsk_symbols_from_bits
 
 random.seed(conf.seed)

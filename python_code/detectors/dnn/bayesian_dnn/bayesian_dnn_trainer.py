@@ -5,7 +5,7 @@ from python_code.channel.modulator import MODULATION_NUM_MAPPING
 from python_code.detectors.dnn.bayesian_dnn.bayesian_dnn_detector import LossVariable, BayesianDNNDetector
 from python_code.detectors.dnn.dnn_trainer import DNNTrainer
 from python_code.utils.constants import HALF
-from python_code.utils.trellis_utils import calculate_mimo_states
+from python_code.utils.probs_utils import calculate_mimo_states
 
 EPOCHS = 400
 HIDDEN_SIZE = 60
