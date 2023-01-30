@@ -3,10 +3,7 @@ from torch import nn
 
 from python_code import DEVICE
 from python_code.utils.bayesian_utils import dropout_ori, dropout_tilde, entropy, LossVariable
-from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
-
-conf = Config()
 
 
 class MaskedDeepSICDetector(nn.Module):

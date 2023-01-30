@@ -1,5 +1,4 @@
 # general
-run_name: 'test' # the name of the experiment
 seed: 0 # run seed
 
 # channel
@@ -11,6 +10,8 @@ linear: True # channel linearity. Boolean value.
 fading_in_channel: False # If the channel is fading/non-fading. values: [True, False]
 snr: 10 # validation SNR value. values: float.
 modulation_type: 'QPSK' # ['BPSK','QPSK']
+n_user: 5 # number of transmitting devices
+n_ant: 5 # number of received signals
 
 # protocol
 block_length: 20250 # coherence block time, total size of pilot + data. values: int.

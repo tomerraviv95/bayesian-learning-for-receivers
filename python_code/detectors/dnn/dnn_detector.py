@@ -1,12 +1,9 @@
 import torch
 from torch import nn
 
-from python_code import DEVICE
-from python_code.channel.channels_hyperparams import MODULATION_NUM_MAPPING
-from python_code.utils.config_singleton import Config
+from python_code import DEVICE, conf
+from python_code.channel.modulator import MODULATION_NUM_MAPPING
 from python_code.utils.constants import Phase, ModulationType
-
-conf = Config()
 
 HIDDEN_SIZE = 60
 

@@ -4,7 +4,6 @@ import numpy as np
 import torch
 
 from python_code import DEVICE
-from python_code.channel.channels_hyperparams import CONSTELLATION_BITS
 from python_code.utils.constants import HALF
 
 
@@ -77,7 +76,7 @@ class EightPSKModulator:
         c1 = torch.div(theta, 0.25, rounding_mode='floor') % 2
         c2 = torch.div(theta, 0.5, rounding_mode='floor') % 2
         c3 = torch.div(theta, 1, rounding_mode='floor') % 2
-        concat_cs = torch.zeros(s.shape[0] * CONSTELLATION_BITS, s.shape[1]).to(DEVICE)
+        concat_cs = torch.zeros(3 * s.shape[0], s.shape[1]).to(DEVICE)
         concat_cs[::3, :] = c1
         concat_cs[1::3, :] = c2
         concat_cs[2::3, :] = c3
@@ -88,4 +87,10 @@ MODULATION_DICT = {
     'BPSK': BPSKModulator,
     'QPSK': QPSKModulator,
     'EightPSK': EightPSKModulator
+}
+
+MODULATION_NUM_MAPPING = {
+    'BPSK': 2,
+    'QPSK': 4,
+    'EightPSK': 8
 }

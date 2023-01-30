@@ -1,10 +1,9 @@
 import numpy as np
 
-from python_code.channel.channels_hyperparams import N_ANT
-from python_code.utils.config_singleton import Config
-from python_code.utils.constants import C, H_COEF, ModulationType
+from python_code import conf
+from python_code.utils.constants import ModulationType
 
-conf = Config()
+H_COEF = 0.8
 
 
 class SEDChannel:
@@ -38,14 +37,14 @@ class SEDChannel:
         conv = SEDChannel._compute_channel_signal_convolution(h, s)
         var = 10 ** (-0.1 * snr)
         if conf.modulation_type == ModulationType.BPSK.name:
-            w = np.sqrt(var) * np.random.randn(N_ANT, s.shape[1])
+            w = np.sqrt(var) * np.random.randn(conf.n_ant, s.shape[1])
         else:
-            w_real = np.sqrt(var) / 2 * np.random.randn(N_ANT, s.shape[1])
-            w_imag = np.sqrt(var) / 2 * np.random.randn(N_ANT, s.shape[1]) * 1j
+            w_real = np.sqrt(var) / 2 * np.random.randn(conf.n_ant, s.shape[1])
+            w_imag = np.sqrt(var) / 2 * np.random.randn(conf.n_ant, s.shape[1]) * 1j
             w = w_real + w_imag
         y = conv + w
         if not conf.linear:
-            y = np.tanh(C * y)
+            y = np.tanh(y)
         return y
 
     @staticmethod

@@ -1,3 +1,4 @@
+import math
 import random
 from typing import List, Tuple
 
@@ -6,16 +7,13 @@ import torch
 from torch.nn import CrossEntropyLoss, MSELoss
 from torch.optim import RMSprop, Adam, SGD
 
-from python_code import DEVICE
+from python_code import DEVICE, conf
 from python_code.channel.channel_dataset import ChannelModelDataset
-from python_code.channel.channels_hyperparams import CONSTELLATION_BITS
-from python_code.utils.config_singleton import Config
+from python_code.channel.modulator import MODULATION_NUM_MAPPING
 from python_code.utils.constants import ModulationType
 from python_code.utils.metrics import calculate_ber, calculate_reliability_and_ece
 from python_code.utils.trellis_utils import get_bits_from_qpsk_symbols, get_qpsk_symbols_from_bits, \
     get_bits_from_eightpsk_symbols, get_eightpsk_symbols_from_bits
-
-conf = Config()
 
 random.seed(conf.seed)
 torch.manual_seed(conf.seed)
@@ -31,6 +29,7 @@ class Trainer(object):
     """
 
     def __init__(self):
+        self.constellation_bits = int(math.log2(MODULATION_NUM_MAPPING[conf.modulation_type]))
         # initialize matrices, datasets and detector
         self._initialize_dataloader()
         self._initialize_detector()
@@ -134,8 +133,10 @@ class Trainer(object):
             # get current word and channel
             tx, h, rx = transmitted_words[block_ind], hs[block_ind], received_words[block_ind]
             # split words into data and pilot part
-            tx_pilot, tx_data = tx[:conf.pilot_size // CONSTELLATION_BITS], tx[conf.pilot_size // CONSTELLATION_BITS:]
-            rx_pilot, rx_data = rx[:conf.pilot_size // CONSTELLATION_BITS], rx[conf.pilot_size // CONSTELLATION_BITS:]
+            tx_pilot, tx_data = tx[:conf.pilot_size // self.constellation_bits], \
+                                tx[conf.pilot_size // self.constellation_bits:]
+            rx_pilot, rx_data = rx[:conf.pilot_size // self.constellation_bits], \
+                                rx[conf.pilot_size // self.constellation_bits:]
             if conf.is_online_training:
                 # re-train the detector
                 self._online_training(tx_pilot, rx_pilot)

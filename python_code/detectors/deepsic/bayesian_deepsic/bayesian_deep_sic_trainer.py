@@ -3,15 +3,13 @@ from typing import List
 import torch
 from torch import nn
 
-from python_code import DEVICE
-from python_code.channel.channels_hyperparams import N_ANT, N_USER, MODULATION_NUM_MAPPING
+from python_code import DEVICE, conf
+from python_code.channel.modulator import MODULATION_NUM_MAPPING
 from python_code.detectors.deepsic.bayesian_deepsic.masked_deep_sic_detector import LossVariable, \
     MaskedDeepSICDetector
 from python_code.detectors.deepsic.deepsic_trainer import DeepSICTrainer
-from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF, Phase, ModulationType
 
-conf = Config()
 ITERATIONS = 2
 EPOCHS = 400
 
@@ -34,8 +32,8 @@ class BayesianDeepSICTrainer(DeepSICTrainer):
         self.softmax = nn.Softmax(dim=1)
         self.classes_num = MODULATION_NUM_MAPPING[conf.modulation_type]
         self.hidden_size = BASE_HIDDEN_SIZE * self.classes_num
-        base_rx_size = N_ANT if conf.modulation_type == ModulationType.BPSK.name else 2 * N_ANT
-        self.linear_input = base_rx_size + (self.classes_num - 1) * (N_USER - 1)  # from DeepSIC paper
+        base_rx_size = conf.n_ant if conf.modulation_type == ModulationType.BPSK.name else 2 * conf.n_ant
+        self.linear_input = base_rx_size + (self.classes_num - 1) * (conf.n_user - 1)  # from DeepSIC paper
         super().__init__()
 
     def __str__(self):

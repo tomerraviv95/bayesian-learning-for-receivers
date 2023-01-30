@@ -3,15 +3,11 @@ from typing import List
 import torch
 from torch import nn
 
-from python_code import DEVICE
-from python_code.channel.channels_hyperparams import N_USER, N_ANT, MODULATION_NUM_MAPPING, CONSTELLATION_BITS
-from python_code.channel.modulator import MODULATION_DICT
+from python_code import DEVICE, conf
+from python_code.channel.modulator import MODULATION_DICT, MODULATION_NUM_MAPPING
 from python_code.detectors.trainer import Trainer
-from python_code.utils.config_singleton import Config
 from python_code.utils.constants import ModulationType, HALF
 from python_code.utils.trellis_utils import prob_to_EightPSK_symbol, prob_to_QPSK_symbol, prob_to_BPSK_symbol
-
-conf = Config()
 
 ITERATIONS = 2
 
@@ -20,8 +16,8 @@ class DeepSICTrainer(Trainer):
 
     def __init__(self):
         self.memory_length = 1
-        self.n_user = N_USER
-        self.n_ant = N_ANT
+        self.n_user = conf.n_user
+        self.n_ant = conf.n_ant
         self.lr = 5e-3
         super().__init__()
 
@@ -45,8 +41,8 @@ class DeepSICTrainer(Trainer):
         if conf.modulation_type == ModulationType.BPSK.name:
             return rx.float()
         elif conf.modulation_type in [ModulationType.QPSK.name, ModulationType.EightPSK.name]:
-            y_input = torch.view_as_real(rx[:, :N_ANT]).float().reshape(rx.shape[0], -1)
-            return torch.cat([y_input, rx[:, N_ANT:].float()], dim=1)
+            y_input = torch.view_as_real(rx[:, :conf.n_ant]).float().reshape(rx.shape[0], -1)
+            return torch.cat([y_input, rx[:, conf.n_ant:].float()], dim=1)
 
     def forward(self, rx: torch.Tensor, h: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
@@ -134,10 +130,10 @@ class DeepSICTrainer(Trainer):
 
     def _initialize_probs_for_infer(self):
         if conf.modulation_type == ModulationType.BPSK.name:
-            probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, N_ANT).to(DEVICE).float()
+            probs_vec = HALF * torch.ones(conf.block_length - conf.pilot_size, self.n_ant).to(DEVICE).float()
         elif conf.modulation_type in [ModulationType.QPSK.name, ModulationType.EightPSK.name]:
             probs_vec = (1 / MODULATION_NUM_MAPPING[conf.modulation_type]) * torch.ones(
-                int(conf.block_length - conf.pilot_size) // CONSTELLATION_BITS, N_ANT)
+                int(conf.block_length - conf.pilot_size) // self.constellation_bits, self.n_ant)
             probs_vec = probs_vec.to(DEVICE).unsqueeze(-1)
             probs_vec = probs_vec.repeat([1, 1, MODULATION_NUM_MAPPING[conf.modulation_type] - 1]).float()
         else:

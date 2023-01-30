@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from dir_definitions import FIGURES_DIR, PLOTS_DIR
+from python_code import conf
 from python_code.detectors.trainer import Trainer
 from python_code.plotters.plotter_config import PlotType
-from python_code.utils.config_singleton import Config
 from python_code.utils.metrics import calculate_reliability_and_ece
 from python_code.utils.python_utils import load_pkl, save_pkl
 
@@ -26,8 +26,6 @@ mpl.rcParams['lines.markersize'] = 8
 mpl.rcParams['legend.fontsize'] = 20
 mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
-
-conf = Config()
 
 MIN_BER_COEF = 0.2
 MARKER_EVERY = 5
@@ -138,7 +136,7 @@ def plot_by_values(all_curves: List[Tuple[np.ndarray, np.ndarray, str]], values:
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(which='both', ls='--')
-    plt.legend(loc='lower left', prop={'size': 15})
+    plt.legend(loc='upper right', prop={'size': 15})
     plt.yscale('log')
     trainer_name = cur_name.split(' ')[0]
     plt.savefig(os.path.join(FIGURES_DIR, folder_name, f'ser_versus_snrs_{trainer_name}.png'),

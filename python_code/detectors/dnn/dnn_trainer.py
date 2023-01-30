@@ -1,14 +1,11 @@
 import torch
 
-from python_code.channel.channels_hyperparams import N_ANT, N_USER
+from python_code import conf
 from python_code.detectors.dnn.dnn_detector import DNNDetector
 from python_code.detectors.trainer import Trainer
-from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase, ModulationType
 from python_code.utils.trellis_utils import calculate_mimo_states, get_bits_from_qpsk_symbols, \
     get_bits_from_eightpsk_symbols, calculate_symbols_from_states
-
-conf = Config()
 
 EPOCHS = 400
 
@@ -22,8 +19,8 @@ class DNNTrainer(Trainer):
 
     def __init__(self):
         self.memory_length = 1
-        self.n_user = N_USER
-        self.n_ant = N_ANT
+        self.n_user = conf.n_user
+        self.n_ant = conf.n_ant
         self.lr = 5e-3
         super().__init__()
 
@@ -60,7 +57,7 @@ class DNNTrainer(Trainer):
 
         if conf.modulation_type == ModulationType.QPSK.name:
             detected_word = get_bits_from_qpsk_symbols(detected_word)
-            detected_word = detected_word
+            confident_bits = detected_word
         if conf.modulation_type == ModulationType.EightPSK.name:
             detected_word = get_bits_from_eightpsk_symbols(detected_word)
             confident_bits = detected_word

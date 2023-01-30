@@ -1,11 +1,8 @@
 from itertools import chain
+from typing import List, Tuple
 
 import numpy as np
 import torch
-
-from python_code.utils.config_singleton import Config
-
-conf = Config()
 
 SENSITIVITY = 1e-3
 
@@ -20,12 +17,19 @@ def calculate_ber(prediction: torch.Tensor, target: torch.Tensor) -> float:
     return 1 - bits_acc
 
 
-def calculate_reliability_and_ece(correct_values_list, error_values_list, values):
+def calculate_reliability_and_ece(correct_values_list: List[float], error_values_list: List[float],
+                                  values: List[float]) -> Tuple[List[float], List[float], float, List[int]]:
+    """
+    Input is two lists, of the correctly detected and incorrectly detected confidence values
+    Computes the two lists of accuracy and confidences (red and blue bar plots in paper), the ECE measure and the
+    normalized frequency count per bin (green bar plot in paper)
+    """
     correct_values_list = np.array(list(chain.from_iterable(correct_values_list)))
     error_values_list = np.array(list(chain.from_iterable(error_values_list)))
     avg_confidence_per_bin, avg_acc_per_bin, inbetween_indices_number_list = [], [], []
     total_values = len(correct_values_list) + len(error_values_list)
     print(total_values)
+    # calculate the mean accuracy and mean confidence for the given range
     for val_j, val_j_plus_1 in zip(values[:-1], values[1:]):
         avg_confidence_value_in_bin, avg_acc_value_in_bin = 0, 0
         inbetween_correct_indices = np.logical_and(val_j <= correct_values_list,
@@ -46,6 +50,7 @@ def calculate_reliability_and_ece(correct_values_list, error_values_list, values
     confidence_acc_diff = np.abs(np.array(avg_confidence_per_bin) - np.array(avg_acc_per_bin))
     ece_measure = np.sum(np.array(inbetween_indices_number_list) * confidence_acc_diff) / sum(
         inbetween_indices_number_list)
+    # calculate the normalized samples frequency
     samples_per_bin = np.array(inbetween_indices_number_list)
     normalized_samples_per_bin = samples_per_bin / np.sum(samples_per_bin)
     return avg_acc_per_bin, avg_confidence_per_bin, ece_measure, normalized_samples_per_bin

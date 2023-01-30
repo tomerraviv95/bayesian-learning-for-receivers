@@ -1,11 +1,9 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+from python_code import conf
 from python_code.channel.channel_dataset import ChannelModelDataset
-from python_code.channel.channels_hyperparams import N_ANT
-from python_code.utils.config_singleton import Config
 
-conf = Config()
 
 mpl.rcParams['xtick.labelsize'] = 24
 mpl.rcParams['ytick.labelsize'] = 24
@@ -33,7 +31,7 @@ def plot_channel_by_phase():
     transmitted_words, received_words, hs = channel_dataset.__getitem__(snr_list=[conf.snr])
     hs_array = hs.squeeze(1).cpu().numpy()
     plt.figure()
-    for j in range(N_ANT):
+    for j in range(conf.n_ant):
         plt.plot(hs_array[:, j], label=f'Tap {j}',color=colors[j])
         plt.ylabel('Magnitude')
         plt.xlabel('Block Index')

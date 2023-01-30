@@ -5,13 +5,11 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from python_code import DEVICE
+from python_code import DEVICE, conf
 from python_code.channel.mimo_channels.mimo_channel_dataset import MIMOChannel
-from python_code.utils.config_singleton import Config
 from python_code.utils.constants import ModulationType
 from python_code.utils.python_utils import normalize_for_modulation
 
-conf = Config()
 
 
 class ChannelModelDataset(Dataset):

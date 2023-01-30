@@ -3,14 +3,12 @@ from typing import List
 import torch
 from torch import nn
 
-from python_code import DEVICE
+from python_code import DEVICE, conf
 from python_code.detectors.deepsic.deepsic_trainer import DeepSICTrainer
 from python_code.detectors.deepsic.model_based_bayesian_deepsic.bayesian_deep_sic_detector import LossVariable, \
     BayesianDeepSICDetector
-from python_code.utils.config_singleton import Config
 from python_code.utils.constants import HALF, Phase
 
-conf = Config()
 ITERATIONS = 2
 EPOCHS = 400
 

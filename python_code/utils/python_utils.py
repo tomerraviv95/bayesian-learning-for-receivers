@@ -1,12 +1,11 @@
+import math
 import pickle as pkl
 from typing import Dict, Any
 
 import numpy as np
 
-from python_code.channel.channels_hyperparams import CONSTELLATION_BITS
-from python_code.utils.config_singleton import Config
-
-conf = Config()
+from python_code import conf
+from python_code.channel.mimo_channels.mimo_channel_dataset import MODULATION_NUM_MAPPING
 
 
 def save_pkl(pkls_path: str, array: np.ndarray, type: str):
@@ -22,6 +21,6 @@ def load_pkl(pkls_path: str, type: str) -> Dict[Any, Any]:
 
 def normalize_for_modulation(size: int) -> int:
     """
-    Return size if BPSK, or 0.5 * size if QPSK. This is the amount of symbols in tx/rx words
+    Return the bits/symbols ratio for the given block size
     """
-    return int(size // CONSTELLATION_BITS)
+    return int(size // int(math.log2(MODULATION_NUM_MAPPING[conf.modulation_type])))
