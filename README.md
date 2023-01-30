@@ -101,7 +101,7 @@ Controls all hyperparameters:
 
 * is_online_training - whether to train at each incoming block using its pilot part or skip training. 
 
-* loss_type - loss type in the set: ['BCE','CrossEntropy','MSE'].
+* loss_type - loss type in the set ['BCE','CrossEntropy','MSE'].
 
 * optimizer_type - in the set ['Adam','RMSprop','SGD'].
 
