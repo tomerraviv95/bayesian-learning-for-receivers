@@ -16,9 +16,9 @@ Please cite our [paper](https://arxiv.org/), if the code is used for publishing 
 - [Folders Structure](#folders-structure)
   * [python_code](#python_code)
     + [channel](#channel)
+    + [detectors](#detectors)
     + [plotters](#plotters)
     + [utils](#utils)
-    + [trainers](#trainers)
   * [resources](#resources)
   * [dir_definitions](#dir_definitions)
 - [Execution](#execution)
@@ -40,7 +40,7 @@ The python simulations of the simplified communication chain: symbols generation
 
 Includes the symbols generation and transmission part, up to the creation of the dataset composed of (transmitted, received) tuples in the channel_dataset wrapper class. The modulation is done in the modulator file.
 
-### trainers 
+### detectors 
 
 Includes the next files:
 
