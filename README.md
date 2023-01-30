@@ -6,7 +6,7 @@
 
 # Bayesian Learning for Deep Receivers
 
-Python repository for the paper "Bayesian Model-Based Deep Learning for MIMO Receivers".
+Python repository for the paper "Modular Model-Based Bayesian Learning for Uncertainty-Aware and Reliable Deep MIMO Receivers".
 
 Please cite our [paper](https://arxiv.org/), if the code is used for publishing research.
 
