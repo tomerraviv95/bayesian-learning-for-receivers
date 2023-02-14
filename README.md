@@ -8,7 +8,7 @@
 
 Python repository for the paper "Modular Model-Based Bayesian Learning for Uncertainty-Aware and Reliable Deep MIMO Receivers".
 
-Please cite our [paper](https://arxiv.org/), if the code is used for publishing research.
+Please cite our [paper](https://arxiv.org/pdf/2302.02436.pdf), if the code is used for publishing research.
 
 # Table of Contents
 
