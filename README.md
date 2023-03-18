@@ -8,7 +8,7 @@
 
 Python repository for the paper "Modular Model-Based Bayesian Learning for Uncertainty-Aware and Reliable Deep MIMO Receivers".
 
-Please cite our [paper](https://arxiv.org/), if the code is used for publishing research.
+Please cite our [paper](https://arxiv.org/pdf/2302.02436.pdf), if the code is used for publishing research.
 
 # Table of Contents
 
@@ -16,9 +16,9 @@ Please cite our [paper](https://arxiv.org/), if the code is used for publishing 
 - [Folders Structure](#folders-structure)
   * [python_code](#python_code)
     + [channel](#channel)
+    + [detectors](#detectors)
     + [plotters](#plotters)
     + [utils](#utils)
-    + [trainers](#trainers)
   * [resources](#resources)
   * [dir_definitions](#dir_definitions)
 - [Execution](#execution)
@@ -38,34 +38,80 @@ The python simulations of the simplified communication chain: symbols generation
 
 ### channel 
 
-Includes all relevant channel functions and classes. The class in "channel_dataset.py" implements the main class for aggregating pairs of (transmitted,received) samples. 
-In "channel.py", the ISI AWGN channel is implemented. "channel_estimation.py" is for the calculation of the h values. Lastly, the channel BPSK modulator lies in "channel_modulator.py".
+Includes the symbols generation and transmission part, up to the creation of the dataset composed of (transmitted, received) tuples in the channel_dataset wrapper class. The modulation is done in the modulator file.
 
-### plotters
-
-Plotting of the BER versus SNR, for Figures 3 and 4 in the paper.
-
-### trainers 
+### detectors 
 
 Includes the next files:
 
-(1) The backbone detector in "vnet_detector.py" module;
+(1) The backbone trainer.py which holds the most basic functions, including the network initialization and the sequential transmission in the channel and BER calculation. 
 
-(2) A basic "trainer.py" class, includes the main evaluation function. It is also used for parsing the config.yaml file and preparing the deep learning setup (loss, optimizer, ...).
+(2) The DeepSIC trainer and backbone detector, including the Bayesian variants. Note that we included end-to-end implementation of DeepSIC even as it is not employed in the paper (DeepSIC in the paper refers to the sequential trained one which has higher performance).
 
-(3) The ViterbiNet trainer, in "vnet_trainer.py", which inherets from the basic trainer class, extending it as needed.
+(3) The black-box DNN we compare to, and its Bayesian variant for comparison - again it is not used in the paper as the DNN is inferior to DeepSIC in small data regime (so its Bayesian variant is not so interesting).
+
+### plotters
+
+The main script is plotter_main.py, and it is used to plot the figures in the paper including ser versus snr, and reliability diagrams.
 
 ### utils
 
-Extra utils for saving and loading pkls; calculating the accuracy over FER and BER; and transitioning over the trellis.
+Extra utils for many different things: 
 
-### config
+* python utils - saving and loading pkls. 
 
-Controls all parameters and hyperparameters.
+* metrics - calculating accuracy, confidence, ECE and sampling frequency for reliability diagrams.
+
+* config_singleton - holds the singleton definition of the config yaml.
+
+* probs utils - for generate symbols from states; symbols from probs and vice versa.
+
+* bayesian utils - for the calculation of the LBD loss.
+
+### config.yaml
+
+Controls all hyperparameters:
+
+* seed - random integer used as the generation seed.
+
+* channel_type - only 'MIMO' is supported for the conference version.
+
+* channel_model - the type of channel used, only 'Synthetic' is support in the conference version but we will add in the journal paper more.
+
+* detector_type - the type of evaluted detector. 'seq_model' - sequentially trained DeepSIC, 'end_to_end_model' - end-to-end trained DeepSIC, 
+'model_based_bayesian'- our proposed model-based Bayesian DeepSIC, 'bayesian' - Bayesian DeepSIC, 'black_box' - DNN detector, 'bayesian_black_box' - Bayesian black-box DNN detector.
+
+* linear - only linear channel is supported in this version.
+
+* fading_in_channel - whether the channel is time-varying. We used 'False' such that the channel is static for the conference paper.
+
+* snr - signal-to-noise value in dB (float).
+
+* modulation_type - which modulation to use, in the set of ['BPSK','QPSK','EightPSK'].
+ 
+* n_user - integer number of transmitting devices.
+
+* n_ant - integer number of received signals.
+
+* block_length - number of total bits in transmission (pilots + info).
+
+* pilot_size - number of pilot bits in the transmission.
+
+* blocks_num - number of blocks to transmit.
+
+* is_online_training - whether to train at each incoming block using its pilot part or skip training. 
+
+* loss_type - loss type in the set ['BCE','CrossEntropy','MSE'].
+
+* optimizer_type - in the set ['Adam','RMSprop','SGD'].
+
+### evaluate
+
+Run the evaluation using one of the methods, as appears in config.yaml
 
 ## resources
 
-Keeps the channel coefficients vectors (4 taps, each with 300 blocks).
+Keeps the configs runs files for creating the paper's figures.
 
 ## dir_definitions 
 
@@ -79,7 +125,7 @@ Then install the environment, follow the installation setup below.
 
 At last, open PyCharm in the root directory. You may run either the trainers or one of the plotters.
 
-This code was simulated with GeForce RTX 2060 with driver version 432.00 and CUDA 10.1. 
+This code was simulated with GeForce RTX 3060 with driver version 516.94 and CUDA 11.6. 
 
 ## Environment Installation
 
