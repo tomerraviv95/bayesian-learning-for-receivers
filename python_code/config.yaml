@@ -4,19 +4,19 @@ seed: 0 # run seed
 # channel
 channel_type: 'MIMO' # Channel type values: ['SISO','MIMO'].
 channel_model: 'Synthetic' # Physical channel models: ['Cost2100','Synthetic']
-detector_type: 'end_to_end_model'
+detector_type: 'bayesian_black_box'
 # 'seq_model' or 'end_to_end_model' or 'model_based_bayesian' or 'bayesian' or 'black_box' or 'bayesian_black_box'
 linear: True # channel linearity. Boolean value.
 fading_in_channel: False # If the channel is fading/non-fading. values: [True, False]
 snr: 12 # validation SNR value. values: float.
-modulation_type: 'BPSK' # ['BPSK','QPSK','EightPSK']
-n_user: 5 # number of transmitting devices
-n_ant: 5 # number of received signals
+modulation_type: 'QPSK' # ['BPSK','QPSK','EightPSK']
+n_user: 4 # number of transmitting devices
+n_ant: 4 # number of received signals
 
 # protocol
-block_length: 8800 # coherence block time, total size of pilot + data. values: int.
-pilot_size: 800 # pilot bits
-blocks_num: 10 # number of validation frames. values: int.
+block_length: 50400 # coherence block time, total size of pilot + data. values: int.
+pilot_size: 400 # pilot bits
+blocks_num: 50 # number of validation frames. values: int.
 
 # online training hyperparameters
 is_online_training: True # Whether to run the online training (as in ViterbiNet). values: [True, False].

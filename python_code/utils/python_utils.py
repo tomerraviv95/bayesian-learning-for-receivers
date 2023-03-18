@@ -5,7 +5,7 @@ from typing import Dict, Any
 import numpy as np
 
 from python_code import conf
-from python_code.channel.mimo_channels.mimo_channel_dataset import MODULATION_NUM_MAPPING
+from python_code.channel.modulator import MODULATION_NUM_MAPPING
 
 
 def save_pkl(pkls_path: str, array: np.ndarray, type: str):

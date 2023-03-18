@@ -155,9 +155,9 @@ class Trainer(object):
             if conf.modulation_type == ModulationType.EightPSK.name:
                 confident_bits = get_eightpsk_symbols_from_bits(confident_bits)
                 target = get_eightpsk_symbols_from_bits(target)
+            print(f'current: {block_ind, ber}')
             correct_values = confidence_word[torch.eq(target, confident_bits)].tolist()
             error_values = confidence_word[~torch.eq(target, confident_bits)].tolist()
-            print(f'current: {block_ind, ber}')
             total_ber.append(ber)
             correct_values_list.append(correct_values)
             error_values_list.append(error_values)
